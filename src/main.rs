@@ -7,7 +7,7 @@ struct Monomial {
 }
 
 impl Monomial {
-    fn print_monomial(&self) -> String {
+    fn expr(&self) -> String {
         let mut output: String = String::from("");
         for (ind, &power) in self.power_list.iter().enumerate() {
             if ind == 0 && power > 0 {
@@ -24,21 +24,32 @@ impl Monomial {
             }
         }
         format!("{}{}", self.coefficient, output)
-        // println!("{}{}",self.coefficient, output);
     }
 }
 
 impl Ord for Monomial {
+    // http://pi.math.cornell.edu/~dmehrle/notes/old/alggeo/07MonomialOrdersandDivisionAlgorithm.pdf
     fn cmp(&self, other: &Self) -> Ordering {
-        for ind in 0..self.power_list.len() {
+        let degree_a: i32 = self.power_list.iter().sum();
+        let degree_b: i32 = other.power_list.iter().sum();
+
+        if degree_a < degree_b {
+            return Ordering::Less;
+        }
+
+        if degree_a > degree_b {
+            return Ordering::Greater;
+        }
+
+        for ind in (0..self.power_list.len()).rev() {
             let power_a = self.power_list[ind];
             let power_b = other.power_list[ind];
 
             if power_a < power_b {
-                return Ordering::Less;
+                return Ordering::Greater;
             }
             if power_a > power_b {
-                return Ordering::Greater;
+                return Ordering::Less;
             }
         }
         if self.coefficient < other.coefficient {
@@ -73,7 +84,7 @@ impl Eq for Monomial {}
 
 impl fmt::Display for Monomial {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let expr = self.print_monomial();
+        let expr = self.expr();
         write!(f, "{}", expr)
     }
 }
@@ -85,8 +96,97 @@ struct Polynomial {
 impl Polynomial {
     fn print_polynomial(&self) {
         for monomial in &self.monomials {
-            monomial.print_monomial();
+            monomial.expr();
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_ordering_a() {
+        // 6x > 5x
+        let monomial_a = Monomial {
+            coefficient: 5.0,
+            power_list: vec![1, 0, 0],
+        };
+        let monomial_b = Monomial {
+            coefficient: 6.0,
+            power_list: vec![1, 0, 0],
+        };
+        assert!(monomial_a < monomial_b);
+    }
+
+    #[test]
+    fn test_ordering_b() {
+        // x^2 > xy
+        let monomial_a = Monomial {
+            coefficient: 1.0,
+            power_list: vec![2, 0, 0],
+        };
+        let monomial_b = Monomial {
+            coefficient: 1.0,
+            power_list: vec![1, 1, 0],
+        };
+        assert!(monomial_a > monomial_b);
+    }
+
+    #[test]
+    fn test_ordering_c() {
+        // xy > y^2
+        let monomial_a = Monomial {
+            coefficient: 1.0,
+            power_list: vec![1, 1, 0],
+        };
+        let monomial_b = Monomial {
+            coefficient: 1.0,
+            power_list: vec![0, 2, 0],
+        };
+        assert!(monomial_a > monomial_b);
+    }
+
+    #[test]
+    fn test_ordering_d() {
+        // y^2 > xz
+        let monomial_a = Monomial {
+            coefficient: 1.0,
+            power_list: vec![0, 2, 0],
+        };
+        let monomial_b = Monomial {
+            coefficient: 1.0,
+            power_list: vec![1, 0, 1],
+        };
+        assert!(monomial_a > monomial_b);
+    }
+
+    #[test]
+    fn test_ordering_e() {
+        // xz > yz
+        let monomial_a = Monomial {
+            coefficient: 1.0,
+            power_list: vec![1, 0, 1],
+        };
+        let monomial_b = Monomial {
+            coefficient: 1.0,
+            power_list: vec![0, 1, 1],
+        };
+        assert!(monomial_a > monomial_b);
+    }
+
+    #[test]
+    fn test_ordering_f() {
+        // yz > z^2
+        let monomial_a = Monomial {
+            coefficient: 1.0,
+            power_list: vec![0, 1, 1],
+        };
+        let monomial_b = Monomial {
+            coefficient: 1.0,
+            power_list: vec![0, 0, 2],
+        };
+        assert!(monomial_a > monomial_b);
     }
 }
 
@@ -94,17 +194,26 @@ fn main() {
     println!("Hello world");
     let monomial_a = Monomial {
         coefficient: 5.0,
-        power_list: vec![1, 0, 0],
+        power_list: vec![2, 0, 0],
     };
     let monomial_b = Monomial {
         coefficient: 5.0,
-        power_list: vec![0, 1, 0],
+        power_list: vec![1, 1, 0],
     };
-    // println!("{}", monomial_b);
+    let monomial_c = Monomial {
+        coefficient: 5.0,
+        power_list: vec![0, 2, 0],
+    };
     println!(
-        "{} < {}: {}",
+        "{} > {}: {}",
         monomial_a,
         monomial_b,
-        monomial_a < monomial_b
+        monomial_a > monomial_b
+    );
+    println!(
+        "{} > {}: {}",
+        monomial_b,
+        monomial_c,
+        monomial_b > monomial_c
     );
 }
