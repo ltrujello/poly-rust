@@ -1,6 +1,7 @@
 use std::cmp::Ordering;
 use std::fmt;
 
+#[derive(Debug)]
 struct Monomial {
     coefficient: f64,
     power_list: Vec<i32>,
@@ -25,11 +26,8 @@ impl Monomial {
         }
         format!("{}{}", self.coefficient, output)
     }
-}
 
-impl Ord for Monomial {
-    // http://pi.math.cornell.edu/~dmehrle/notes/old/alggeo/07MonomialOrdersandDivisionAlgorithm.pdf
-    fn cmp(&self, other: &Self) -> Ordering {
+    fn cmp_terms(&self, other: &Self) -> Ordering {
         let degree_a: i32 = self.power_list.iter().sum();
         let degree_b: i32 = other.power_list.iter().sum();
 
@@ -52,13 +50,26 @@ impl Ord for Monomial {
                 return Ordering::Less;
             }
         }
-        if self.coefficient < other.coefficient {
-            return Ordering::Less;
-        }
-        if self.coefficient > other.coefficient {
-            return Ordering::Greater;
-        }
         Ordering::Equal
+    }
+}
+
+impl Ord for Monomial {
+    // http://pi.math.cornell.edu/~dmehrle/notes/old/alggeo/07MonomialOrdersandDivisionAlgorithm.pdf
+    fn cmp(&self, other: &Self) -> Ordering {
+        match self.cmp_terms(other) {
+            Ordering::Less => Ordering::Less,
+            Ordering::Greater => Ordering::Greater,
+            Ordering::Equal => {
+                if self.coefficient < other.coefficient {
+                    return Ordering::Less;
+                }
+                if self.coefficient > other.coefficient {
+                    return Ordering::Greater;
+                }
+                Ordering::Equal
+            }
+        }
     }
 }
 
@@ -104,6 +115,30 @@ impl Polynomial {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_equality() {
+        // xyz == xyz, 5xyz == 5xyz
+        let monomial_a = Monomial {
+            coefficient: 1.0,
+            power_list: vec![1, 1, 1],
+        };
+        let monomial_b = Monomial {
+            coefficient: 1.0,
+            power_list: vec![1, 1, 1],
+        };
+        assert_eq!(monomial_a, monomial_b);
+
+        let monomial_a = Monomial {
+            coefficient: 5.0,
+            power_list: vec![1, 1, 1],
+        };
+        let monomial_b = Monomial {
+            coefficient: 5.0,
+            power_list: vec![1, 1, 1],
+        };
+        assert_eq!(monomial_a, monomial_b);
+    }
 
     #[test]
     fn test_ordering_a() {
