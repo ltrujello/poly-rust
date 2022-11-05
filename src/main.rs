@@ -1,5 +1,6 @@
 use std::cmp::Ordering;
 use std::fmt;
+use std::ops;
 
 #[derive(Debug)]
 struct Monomial {
@@ -100,6 +101,7 @@ impl fmt::Display for Monomial {
     }
 }
 
+#[derive(Debug)]
 struct Polynomial {
     monomials: Vec<Monomial>,
 }
@@ -107,7 +109,20 @@ struct Polynomial {
 impl Polynomial {
     fn print_polynomial(&self) {
         for monomial in &self.monomials {
-            monomial.expr();
+            println!("{}", monomial.expr());
+        }
+    }
+}
+
+impl ops::AddAssign for Polynomial {
+    fn add_assign(&mut self, other: Self) {
+        for mut monomial in self.monomials.iter_mut() {
+            for other_monomial in &other.monomials {
+                if monomial.cmp_terms(&other_monomial) == Ordering::Equal {
+                    monomial.coefficient += other_monomial.coefficient;
+                    break;
+                }
+            }
         }
     }
 }
@@ -232,23 +247,23 @@ fn main() {
         power_list: vec![2, 0, 0],
     };
     let monomial_b = Monomial {
-        coefficient: 5.0,
-        power_list: vec![1, 1, 0],
+        coefficient: 6.0,
+        power_list: vec![0, 2, 0],
     };
     let monomial_c = Monomial {
         coefficient: 5.0,
         power_list: vec![0, 2, 0],
     };
-    println!(
-        "{} > {}: {}",
-        monomial_a,
-        monomial_b,
-        monomial_a > monomial_b
-    );
-    println!(
-        "{} > {}: {}",
-        monomial_b,
-        monomial_c,
-        monomial_b > monomial_c
-    );
+
+    let mut polynomial_a = Polynomial {
+        monomials: vec![monomial_b],
+    };
+    let polynomial_b = Polynomial {
+        monomials: vec![monomial_c],
+    };
+
+    polynomial_a.print_polynomial();
+    polynomial_b.print_polynomial();
+    polynomial_a += polynomial_b;
+    polynomial_a.print_polynomial();
 }
