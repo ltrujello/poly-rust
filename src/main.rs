@@ -1,3 +1,4 @@
+use std::clone::Clone;
 use std::cmp::Ordering;
 use std::fmt;
 use std::ops;
@@ -52,6 +53,15 @@ impl Monomial {
             }
         }
         Ordering::Equal
+    }
+}
+
+impl Clone for Monomial {
+    fn clone(&self) -> Self {
+        Monomial {
+            coefficient: self.coefficient,
+            power_list: self.power_list.clone(),
+        }
     }
 }
 
@@ -114,6 +124,14 @@ impl Polynomial {
     }
 }
 
+impl Clone for Polynomial {
+    fn clone(&self) -> Self {
+        Self {
+            monomials: self.monomials.clone(),
+        }
+    }
+}
+
 impl ops::AddAssign for Polynomial {
     fn add_assign(&mut self, other: Self) {
         for mut monomial in self.monomials.iter_mut() {
@@ -124,6 +142,15 @@ impl ops::AddAssign for Polynomial {
                 }
             }
         }
+    }
+}
+
+impl ops::Add for Polynomial {
+    type Output = Self;
+    fn add(self, other: Self) -> Self {
+        let mut new_poly = self.clone();
+        new_poly += other;
+        new_poly
     }
 }
 
@@ -264,6 +291,8 @@ fn main() {
 
     polynomial_a.print_polynomial();
     polynomial_b.print_polynomial();
-    polynomial_a += polynomial_b;
-    polynomial_a.print_polynomial();
+    // polynomial_a += polynomial_b;
+    // polynomial_a.print_polynomial();
+    let polynomial_d = polynomial_a + polynomial_b;
+    polynomial_d.print_polynomial();
 }
