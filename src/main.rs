@@ -19,17 +19,6 @@ fn main() {
         power_list: vec![0, 2, 0],
     };
 
-    let mut polynomial_a = Polynomial {
-        monomials: vec![monomial_b],
-    };
-    let polynomial_b = Polynomial {
-        monomials: vec![monomial_c],
-    };
-
-    polynomial_a.print_polynomial();
-    polynomial_b.print_polynomial();
-    // polynomial_a += polynomial_b;
-    // polynomial_a.print_polynomial();
-    let polynomial_d = polynomial_a + polynomial_b;
-    polynomial_d.print_polynomial();
+    let monomial_d =  monomial_c * 2.0;
+    println!("{}", monomial_d); 
 }

@@ -1,4 +1,3 @@
-// pub mod polynomial {
 use std::clone::Clone;
 use std::cmp::Ordering;
 use std::ops;
@@ -47,4 +46,4 @@ impl ops::Add for Polynomial {
         new_poly
     }
 }
-// }
+

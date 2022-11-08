@@ -1,7 +1,7 @@
-// pub mod monomial {
 use std::clone::Clone;
 use std::cmp::Ordering;
 use std::fmt;
+use std::ops;
 
 #[derive(Debug)]
 pub struct Monomial {
@@ -108,6 +108,45 @@ impl fmt::Display for Monomial {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let expr = self.expr();
         write!(f, "{}", expr)
+    }
+}
+
+impl ops::Mul for Monomial {
+    type Output = Self;
+    fn mul(self, other: Self) -> Self {
+        let coefficient = self.coefficient * other.coefficient;
+        let mut power_list;
+        if coefficient != 0.0 {
+            power_list = self.power_list.clone();
+            for ind in 0..self.power_list.len() {
+                power_list[ind] += other.power_list[ind];
+            }
+        }
+        else {
+            power_list = vec![0; self.power_list.len().try_into().unwrap()];
+        }
+        Monomial {
+            coefficient: coefficient,
+            power_list: power_list,
+        }
+    }
+}
+
+impl ops::Mul<Monomial> for f64 {
+    type Output = Monomial;
+
+    fn mul(self, other: Monomial) -> Monomial {
+        let mut monomial = other.clone();
+        monomial.coefficient *= self;
+        monomial
+    }
+}
+
+impl ops::Mul<f64> for Monomial {
+    type Output = Monomial;
+
+    fn mul(self, other: f64) -> Monomial {
+        other * self
     }
 }
 
@@ -222,5 +261,34 @@ mod tests {
         };
         assert!(monomial_a > monomial_b);
     }
+    
+    #[test]
+    fn test_mul(){
+        let monomial_a = Monomial {
+            coefficient: 5.0,
+            power_list: vec![2, 0, 0],
+        };
+        let monomial_b = Monomial {
+            coefficient: 6.0,
+            power_list: vec![0, 2, 0],
+        };
+        let monomial_c = monomial_a * monomial_b;
+        assert_eq!(monomial_c.coefficient, 30.0);
+        assert_eq!(monomial_c.power_list, [2, 2, 0]);
+    }
+
+    #[test]
+    fn test_mul_zero(){
+        let monomial_a = Monomial {
+            coefficient: 0.0,
+            power_list: vec![0, 0, 0],
+        };
+        let monomial_b = Monomial {
+            coefficient: 6.0,
+            power_list: vec![0, 2, 0],
+        };
+        let monomial_c = monomial_a * monomial_b;
+        assert_eq!(monomial_c.coefficient, 0.0);
+        assert_eq!(monomial_c.power_list, [0, 0, 0]);
+    }
 }
-// }
