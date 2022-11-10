@@ -15,10 +15,17 @@ fn main() {
         power_list: vec![0, 2, 0],
     };
     let monomial_c = Monomial {
-        coefficient: 5.0,
+        coefficient: 7.0,
         power_list: vec![0, 2, 0],
     };
 
-    let monomial_d =  monomial_c * 2.0;
-    println!("{}", monomial_d); 
+    let polynomial_a = Polynomial {
+        monomials: vec![monomial_a, monomial_b]
+    };
+    let polynomial_b = Polynomial {
+        monomials: vec![monomial_c]
+    };
+    let polynomial = polynomial_a * polynomial_b;
+
+    polynomial.print_polynomial();
 }

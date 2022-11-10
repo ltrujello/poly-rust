@@ -111,6 +111,7 @@ impl fmt::Display for Monomial {
     }
 }
 
+// Monomial * Monomial
 impl ops::Mul for Monomial {
     type Output = Self;
     fn mul(self, other: Self) -> Self {
@@ -121,8 +122,7 @@ impl ops::Mul for Monomial {
             for ind in 0..self.power_list.len() {
                 power_list[ind] += other.power_list[ind];
             }
-        }
-        else {
+        } else {
             power_list = vec![0; self.power_list.len().try_into().unwrap()];
         }
         Monomial {
@@ -132,6 +132,7 @@ impl ops::Mul for Monomial {
     }
 }
 
+// f64 * Monomial
 impl ops::Mul<Monomial> for f64 {
     type Output = Monomial;
 
@@ -142,6 +143,7 @@ impl ops::Mul<Monomial> for f64 {
     }
 }
 
+// Monomial * f64
 impl ops::Mul<f64> for Monomial {
     type Output = Monomial;
 
@@ -261,9 +263,9 @@ mod tests {
         };
         assert!(monomial_a > monomial_b);
     }
-    
+
     #[test]
-    fn test_mul(){
+    fn test_mul() {
         let monomial_a = Monomial {
             coefficient: 5.0,
             power_list: vec![2, 0, 0],
@@ -278,7 +280,7 @@ mod tests {
     }
 
     #[test]
-    fn test_mul_zero(){
+    fn test_mul_zero() {
         let monomial_a = Monomial {
             coefficient: 0.0,
             power_list: vec![0, 0, 0],
