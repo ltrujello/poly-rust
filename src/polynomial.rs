@@ -10,12 +10,6 @@ pub struct Polynomial {
 }
 
 impl Polynomial {
-    pub fn print_polynomial(&self) {
-        for monomial in &self.monomials {
-            println!("{}", monomial.expr());
-        }
-    }
-
     pub fn new() -> Polynomial {
         Polynomial {
             monomials: Vec::new(),
@@ -27,6 +21,38 @@ impl Polynomial {
             Ok(pos) => {}
             Err(pos) => self.monomials.insert(pos, monomial),
         }
+    }
+
+    pub fn expr(&self) -> String {
+        let mut output = String::from("");
+        if self.monomials.len() < 1 {
+            return output;
+        }
+        // first term of a polynomial is printed differently
+        let first_term = &self.monomials[0];
+        let coeff = first_term.coefficient.abs();
+        let term_expr = first_term.term_expr();
+        if first_term.coefficient < 0.0 {
+            output.push_str("-");
+        }
+        output.push_str(&format!("{coeff}{term_expr}"));
+
+        for ind in 1..self.monomials.len() {
+            let monomial = &self.monomials[ind];
+            if monomial.coefficient < 0.0 {
+                output.push_str(" - ");
+            } else {
+                output.push_str(" + ");
+            }
+            let coeff = monomial.coefficient.abs();
+            let term_expr = monomial.term_expr();
+            output.push_str(&format!("{coeff}{term_expr}"));
+        }
+        output
+    }
+
+    pub fn print_polynomial(&self) {
+        println!("{}", self.expr());
     }
 }
 
@@ -89,7 +115,6 @@ impl ops::Mul for Polynomial {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -110,21 +135,25 @@ mod tests {
         };
 
         let polynomial_a = Polynomial {
-            monomials: vec![monomial_a, monomial_b]
+            monomials: vec![monomial_a, monomial_b],
         };
         let polynomial_b = Polynomial {
-            monomials: vec![monomial_c]
+            monomials: vec![monomial_c],
         };
         let polynomial = polynomial_a * polynomial_b;
-        assert_eq!(polynomial.monomials[0], Monomial {
-            coefficient: 42.0,
-            power_list: vec![0, 4, 0],
-        });
-        assert_eq!(polynomial.monomials[1], Monomial {
-            coefficient: 35.0,
-            power_list: vec![2, 2, 0],
-        });
-
+        assert_eq!(
+            polynomial.monomials[0],
+            Monomial {
+                coefficient: 42.0,
+                power_list: vec![0, 4, 0],
+            }
+        );
+        assert_eq!(
+            polynomial.monomials[1],
+            Monomial {
+                coefficient: 35.0,
+                power_list: vec![2, 2, 0],
+            }
+        );
     }
 }
-

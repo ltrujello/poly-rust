@@ -12,21 +12,7 @@ pub struct Monomial {
 impl Monomial {
     pub fn expr(&self) -> String {
         let mut output: String = String::from("");
-        for (ind, &power) in self.power_list.iter().enumerate() {
-            if ind == 0 && power > 0 {
-                output.push_str(&String::from("x^"));
-                output.push_str(&format!("{power}"));
-            }
-            if ind == 1 && power > 0 {
-                output.push_str(&String::from("y^"));
-                output.push_str(&format!("{power}"));
-            }
-            if ind == 2 && power > 0 {
-                output.push_str(&String::from("z^"));
-                output.push_str(&format!("{power}"));
-            }
-        }
-        format!("{}{}", self.coefficient, output)
+        format!("{}{}", self.coefficient, self.term_expr())
     }
 
     pub fn cmp_terms(&self, other: &Self) -> Ordering {
@@ -53,6 +39,24 @@ impl Monomial {
             }
         }
         Ordering::Equal
+    }
+    pub fn term_expr(&self) -> String {
+        let mut output: String = String::from("");
+        for (ind, &power) in self.power_list.iter().enumerate() {
+            if ind == 0 && power > 0 {
+                output.push_str(&String::from("x^"));
+                output.push_str(&format!("{power}"));
+            }
+            if ind == 1 && power > 0 {
+                output.push_str(&String::from("y^"));
+                output.push_str(&format!("{power}"));
+            }
+            if ind == 2 && power > 0 {
+                output.push_str(&String::from("z^"));
+                output.push_str(&format!("{power}"));
+            }
+        }
+        output
     }
 }
 

@@ -20,10 +20,10 @@ fn main() {
     };
 
     let polynomial_a = Polynomial {
-        monomials: vec![monomial_a, monomial_b]
+        monomials: vec![monomial_a, monomial_b],
     };
     let polynomial_b = Polynomial {
-        monomials: vec![monomial_c]
+        monomials: vec![monomial_c],
     };
     let polynomial = polynomial_a * polynomial_b;
 
