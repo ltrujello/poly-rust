@@ -44,16 +44,13 @@ impl Monomial {
         let mut output: String = String::from("");
         for (ind, &power) in self.power_list.iter().enumerate() {
             if ind == 0 && power > 0 {
-                output.push_str(&String::from("x^"));
-                output.push_str(&format!("{power}"));
+                output.push_str(&format!("x^{power}"));
             }
             if ind == 1 && power > 0 {
-                output.push_str(&String::from("y^"));
-                output.push_str(&format!("{power}"));
+                output.push_str(&format!("y^{power}"));
             }
             if ind == 2 && power > 0 {
-                output.push_str(&String::from("z^"));
-                output.push_str(&format!("{power}"));
+                output.push_str(&format!("z^{power}"));
             }
         }
         output
@@ -75,6 +72,7 @@ impl Ord for Monomial {
         match self.cmp_terms(other) {
             Ordering::Less => Ordering::Less,
             Ordering::Greater => Ordering::Greater,
+            // Break tie by comparing coeffs
             Ordering::Equal => {
                 if self.coefficient < other.coefficient {
                     return Ordering::Less;

@@ -37,6 +37,7 @@ impl Polynomial {
         }
         output.push_str(&format!("{coeff}{term_expr}"));
 
+        // print the remainder of the terms
         for ind in 1..self.monomials.len() {
             let monomial = &self.monomials[ind];
             if monomial.coefficient < 0.0 {
@@ -80,13 +81,17 @@ impl ops::AddAssign<Monomial> for Polynomial {
 // Polynomial += Polynomial
 impl ops::AddAssign for Polynomial {
     fn add_assign(&mut self, other: Self) {
-        for mut monomial in self.monomials.iter_mut() {
+        let mut leftover_monomials = Vec::new(); for mut monomial in self.monomials.iter_mut() {
             for other_monomial in &other.monomials {
                 if monomial.cmp_terms(&other_monomial) == Ordering::Equal {
                     monomial.coefficient += other_monomial.coefficient;
-                    break;
+                    continue;
                 }
+                leftover_monomials.push(other_monomial.clone());
             }
+        }
+        for monomial in leftover_monomials{
+            self.monomials.push(monomial);
         }
     }
 }
@@ -100,6 +105,38 @@ impl ops::Add for Polynomial {
         new_poly
     }
 }
+
+// Polynomial + &Polynomial
+impl ops::Add<&Polynomial> for Polynomial {
+    type Output = Self;
+    fn add(self, other: &Self) -> Self {
+        let mut new_poly = self.clone();
+        new_poly += other.clone();
+        new_poly
+    }
+}
+
+// &Polynomial + Polynomial
+impl ops::Add<Polynomial> for &Polynomial {
+    type Output = Polynomial;
+    fn add(self, other: Polynomial) -> Polynomial {
+        let mut new_poly = self.clone();
+        new_poly += other.clone();
+        new_poly
+    }
+}
+
+
+// &Polynomial + &Polynomial
+impl<'a> ops::Add<&'a Polynomial> for &'a Polynomial {
+    type Output = Polynomial;
+    fn add(self, other: Self) -> Polynomial {
+        let mut new_poly = self.clone();
+        new_poly += other.clone();
+        new_poly
+    }
+}
+
 
 // Polynomial * Polynomial
 impl ops::Mul for Polynomial {
@@ -115,6 +152,27 @@ impl ops::Mul for Polynomial {
     }
 }
 
+// f64 * Polynomial
+impl ops::Mul<Polynomial> for f64 {
+    type Output = Polynomial;
+
+    fn mul(self, other: Polynomial) -> Polynomial {
+        let mut polynomial = other.clone();
+        for monomial in polynomial.monomials.iter_mut() {
+            monomial.coefficient *= self;
+        }
+        polynomial
+    }
+}
+
+// Polynomial * f64
+impl ops::Mul<f64> for Polynomial {
+    type Output = Self;
+
+    fn mul(self, other: f64) -> Self {
+        other * self
+    }
+}
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -155,5 +213,29 @@ mod tests {
                 power_list: vec![2, 2, 0],
             }
         );
+    }
+
+    fn test_addition_1() {
+        let monomial_a = Monomial {
+            coefficient: 5.0,
+            power_list: vec![2, 0, 0],
+        };
+        let monomial_b = Monomial {
+            coefficient: 6.0,
+            power_list: vec![0, 2, 0],
+        };
+        let monomial_c = Monomial {
+            coefficient: 7.0,
+            power_list: vec![0, 2, 0],
+        };
+
+        let polynomial_a = Polynomial {
+            monomials: vec![monomial_a, monomial_b],
+        };
+        let polynomial_b = &Polynomial {
+            monomials: vec![monomial_c],
+        };
+        let polynomial = polynomial_b + polynomial_a;
+        assert_eq!(polynomial.expr(), "13y^2 + 5x^2");
     }
 }

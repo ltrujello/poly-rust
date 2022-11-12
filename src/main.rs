@@ -25,7 +25,9 @@ fn main() {
     let polynomial_b = Polynomial {
         monomials: vec![monomial_c],
     };
-    let polynomial = polynomial_a * polynomial_b;
+    let polynomial = polynomial_b + polynomial_a;
+    // let polynomial_2 = polynomial + polynomial;
+    // let polynomial_d = polynomial_a * polynomial_b;
 
     polynomial.print_polynomial();
 }
