@@ -176,9 +176,11 @@ impl ops::Mul<f64> for Polynomial {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use rstest::*;
 
-    #[test]
-    fn test_mul_1() {
+    #[fixture]
+    fn polynomial_a() -> Polynomial {
+        // 5x^2 + 6y^2
         let monomial_a = Monomial {
             coefficient: 5.0,
             power_list: vec![2, 0, 0],
@@ -187,17 +189,27 @@ mod tests {
             coefficient: 6.0,
             power_list: vec![0, 2, 0],
         };
+        let polynomial_a = Polynomial {
+            monomials: vec![monomial_a, monomial_b],
+        };
+        polynomial_a
+    }
+
+    #[fixture]
+    fn polynomial_b() -> Polynomial {
+        // 7y^2 
         let monomial_c = Monomial {
             coefficient: 7.0,
             power_list: vec![0, 2, 0],
         };
-
-        let polynomial_a = Polynomial {
-            monomials: vec![monomial_a, monomial_b],
-        };
         let polynomial_b = Polynomial {
             monomials: vec![monomial_c],
         };
+        polynomial_b
+    }
+
+    #[rstest]
+    fn test_mul_1(polynomial_a: Polynomial, polynomial_b: Polynomial) {
         let polynomial = polynomial_a * polynomial_b;
         assert_eq!(
             polynomial.monomials[0],
@@ -215,26 +227,8 @@ mod tests {
         );
     }
 
-    fn test_addition_1() {
-        let monomial_a = Monomial {
-            coefficient: 5.0,
-            power_list: vec![2, 0, 0],
-        };
-        let monomial_b = Monomial {
-            coefficient: 6.0,
-            power_list: vec![0, 2, 0],
-        };
-        let monomial_c = Monomial {
-            coefficient: 7.0,
-            power_list: vec![0, 2, 0],
-        };
-
-        let polynomial_a = Polynomial {
-            monomials: vec![monomial_a, monomial_b],
-        };
-        let polynomial_b = &Polynomial {
-            monomials: vec![monomial_c],
-        };
+    #[rstest]
+    fn test_addition_1(polynomial_a: Polynomial, polynomial_b: Polynomial) {
         let polynomial = polynomial_b + polynomial_a;
         assert_eq!(polynomial.expr(), "13y^2 + 5x^2");
     }
