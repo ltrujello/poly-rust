@@ -81,7 +81,8 @@ impl ops::AddAssign<Monomial> for Polynomial {
 // Polynomial += Polynomial
 impl ops::AddAssign for Polynomial {
     fn add_assign(&mut self, other: Self) {
-        let mut leftover_monomials = Vec::new(); for mut monomial in self.monomials.iter_mut() {
+        let mut leftover_monomials = Vec::new();
+        for mut monomial in self.monomials.iter_mut() {
             for other_monomial in &other.monomials {
                 if monomial.cmp_terms(&other_monomial) == Ordering::Equal {
                     monomial.coefficient += other_monomial.coefficient;
@@ -90,7 +91,7 @@ impl ops::AddAssign for Polynomial {
                 leftover_monomials.push(other_monomial.clone());
             }
         }
-        for monomial in leftover_monomials{
+        for monomial in leftover_monomials {
             self.monomials.push(monomial);
         }
     }
@@ -126,7 +127,6 @@ impl ops::Add<Polynomial> for &Polynomial {
     }
 }
 
-
 // &Polynomial + &Polynomial
 impl<'a> ops::Add<&'a Polynomial> for &'a Polynomial {
     type Output = Polynomial;
@@ -136,7 +136,6 @@ impl<'a> ops::Add<&'a Polynomial> for &'a Polynomial {
         new_poly
     }
 }
-
 
 // Polynomial * Polynomial
 impl ops::Mul for Polynomial {
@@ -197,7 +196,7 @@ mod tests {
 
     #[fixture]
     fn polynomial_b() -> Polynomial {
-        // 7y^2 
+        // 7y^2
         let monomial_c = Monomial {
             coefficient: 7.0,
             power_list: vec![0, 2, 0],

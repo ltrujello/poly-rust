@@ -1,4 +1,5 @@
 use std::clone::Clone;
+use std::cmp;
 use std::cmp::Ordering;
 use std::fmt;
 use std::ops;
@@ -27,9 +28,20 @@ impl Monomial {
             return Ordering::Greater;
         }
 
-        for ind in (0..self.power_list.len()).rev() {
-            let power_a = self.power_list[ind];
-            let power_b = other.power_list[ind];
+        let max_len = std::cmp::max(self.power_list.len(), other.power_list.len());
+        for ind in (0..max_len).rev() {
+            let power_a: i32;
+            let power_b: i32;
+
+            match self.power_list.get(ind) {
+                Some(power) => power_a = *power,
+                None => power_a = 0,
+            }
+
+            match other.power_list.get(ind) {
+                Some(power) => power_b = *power,
+                None => power_b = 0,
+            }
 
             if power_a < power_b {
                 return Ordering::Greater;
@@ -157,6 +169,7 @@ impl ops::Mul<f64> for Monomial {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use rstest::*;
 
     #[test]
     fn test_equality() {
@@ -264,6 +277,35 @@ mod tests {
             power_list: vec![0, 0, 2],
         };
         assert!(monomial_a > monomial_b);
+    }
+
+    #[test]
+    fn test_ordering_g() {
+        // x^5y > x^2yz^3
+        let monomial_a = Monomial {
+            coefficient: 1.0,
+            power_list: vec![5, 1],
+        };
+        let monomial_b = Monomial {
+            coefficient: 1.0,
+            power_list: vec![2, 1, 3],
+        };
+        assert!(monomial_a > monomial_b);
+    }
+
+    #[test]
+    fn test_ordering_h() {
+        // x^3 > x^2y
+        let monomial_a = Monomial {
+            coefficient: 1.0,
+            power_list: vec![3],
+        };
+        let monomial_b = Monomial {
+            coefficient: 1.0,
+            power_list: vec![2, 1],
+        };
+        let order = monomial_a > monomial_b;
+        println!("{}", order);
     }
 
     #[test]
