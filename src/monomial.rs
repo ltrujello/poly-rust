@@ -11,11 +11,6 @@ pub struct Monomial {
 }
 
 impl Monomial {
-    pub fn expr(&self) -> String {
-        let mut output: String = String::from("");
-        format!("{}{}", self.coefficient, self.term_expr())
-    }
-
     pub fn cmp_terms(&self, other: &Self) -> Ordering {
         let degree_a: i32 = self.power_list.iter().sum();
         let degree_b: i32 = other.power_list.iter().sum();
@@ -30,18 +25,8 @@ impl Monomial {
 
         let max_len = std::cmp::max(self.power_list.len(), other.power_list.len());
         for ind in (0..max_len).rev() {
-            let power_a: i32;
-            let power_b: i32;
-
-            match self.power_list.get(ind) {
-                Some(power) => power_a = *power,
-                None => power_a = 0,
-            }
-
-            match other.power_list.get(ind) {
-                Some(power) => power_b = *power,
-                None => power_b = 0,
-            }
+            let power_a = self.get_power(ind);
+            let power_b = other.get_power(ind);
 
             if power_a < power_b {
                 return Ordering::Greater;
@@ -52,6 +37,12 @@ impl Monomial {
         }
         Ordering::Equal
     }
+
+    pub fn expr(&self) -> String {
+        let mut output: String = String::from("");
+        format!("{}{}", self.coefficient, self.term_expr())
+    }
+
     pub fn term_expr(&self) -> String {
         let mut output: String = String::from("");
         for (ind, &power) in self.power_list.iter().enumerate() {
@@ -66,6 +57,15 @@ impl Monomial {
             }
         }
         output
+    }
+
+    pub fn get_power(&self, ind: usize) -> i32 {
+        let power: i32;
+        match self.power_list.get(ind) {
+            Some(res) => power = *res,
+            None => power = 0,
+        }
+        power
     }
 }
 
@@ -132,9 +132,13 @@ impl ops::Mul for Monomial {
         let coefficient = self.coefficient * other.coefficient;
         let mut power_list;
         if coefficient != 0.0 {
-            power_list = self.power_list.clone();
-            for ind in 0..self.power_list.len() {
-                power_list[ind] += other.power_list[ind];
+            let max_len = std::cmp::max(self.power_list.len(), other.power_list.len());
+            power_list = vec![0; max_len];
+            for ind in 0..max_len {
+                let power_a = self.get_power(ind);
+                let power_b = other.get_power(ind);
+
+                power_list[ind] = power_a + power_b;
             }
         } else {
             power_list = vec![0; self.power_list.len().try_into().unwrap()];
@@ -309,7 +313,7 @@ mod tests {
     }
 
     #[test]
-    fn test_mul() {
+    fn test_mul_a() {
         let monomial_a = Monomial {
             coefficient: 5.0,
             power_list: vec![2, 0, 0],
@@ -321,6 +325,21 @@ mod tests {
         let monomial_c = monomial_a * monomial_b;
         assert_eq!(monomial_c.coefficient, 30.0);
         assert_eq!(monomial_c.power_list, [2, 2, 0]);
+    }
+
+    #[test]
+    fn test_mul_b() {
+        let monomial_a = Monomial {
+            coefficient: 5.0,
+            power_list: vec![2],
+        };
+        let monomial_b = Monomial {
+            coefficient: 6.0,
+            power_list: vec![0, 2, 3],
+        };
+        let monomial_c = monomial_a * monomial_b;
+        assert_eq!(monomial_c.coefficient, 30.0);
+        assert_eq!(monomial_c.power_list, [2, 2, 3]);
     }
 
     #[test]
