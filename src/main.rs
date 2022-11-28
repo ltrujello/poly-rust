@@ -1,33 +1,25 @@
+mod lexer;
 mod monomial;
 mod polynomial;
 
+pub use crate::lexer::{tokenize, Lexer, TokType, Token};
 pub use crate::monomial::Monomial;
 pub use crate::polynomial::Polynomial;
+use std::io;
 
 fn main() {
-    println!("Hello world");
-    let monomial_a = Monomial {
-        coefficient: 5.0,
-        power_list: vec![2, 0, 0],
-    };
-    let monomial_b = Monomial {
-        coefficient: 6.0,
-        power_list: vec![0, 2, 0],
-    };
-    let monomial_c = Monomial {
-        coefficient: 7.0,
-        power_list: vec![0, 2, 0],
+    let mut buffer = String::new();
+    io::stdin().read_line(&mut buffer);
+
+    let mut lexer = Lexer {
+        current_line: buffer.clone(),
+        line_size: buffer.len(),
+        curr_pos: 0,
+        curr_tok: Token {
+            token_type: TokType::End,
+            token_content: String::from(""),
+        },
     };
 
-    let polynomial_a = Polynomial {
-        monomials: vec![monomial_a, monomial_b],
-    };
-    let polynomial_b = Polynomial {
-        monomials: vec![monomial_c],
-    };
-    let polynomial = polynomial_b + polynomial_a;
-    // let polynomial_2 = polynomial + polynomial;
-    // let polynomial_d = polynomial_a * polynomial_b;
-
-    polynomial.print_polynomial();
+    tokenize(lexer);
 }
