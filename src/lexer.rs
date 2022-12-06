@@ -14,6 +14,7 @@ pub enum TokType {
     Rpar,
     Equal,
     Number,
+    Period,
     Xvar,
     Caret,
     Identifier,
@@ -59,6 +60,7 @@ impl Lexer {
             self.curr_pos += 1;
         } else {
             println!("Invalid attempt to move after the last character of input");
+            return self.current_line.chars().nth(self.curr_pos).unwrap();
         }
         return self.current_line.chars().nth(self.curr_pos).unwrap();
     }
@@ -68,6 +70,7 @@ impl Lexer {
             self.curr_pos -= 1;
         } else {
             println!("Invalid attempt to move before the first character of input");
+            return self.current_line.chars().nth(self.curr_pos).unwrap();
         }
         return self.current_line.chars().nth(self.curr_pos).unwrap();
     }
@@ -93,15 +96,51 @@ impl Lexer {
             '=' => self.curr_tok.token_type = TokType::Equal,
             'x' | 'y' | 'z' => self.curr_tok.token_type = TokType::Xvar,
             '^' => self.curr_tok.token_type = TokType::Caret,
-            '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '.' => {
-                self.curr_tok.token_type = TokType::Number
+            '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' => {
+                let mut number = 0.0;
+                while ch.is_digit(10) {
+                    let get_digit = ch.to_digit(10);
+                    let mut digit: f32 = 0.0;
+                    match get_digit {
+                        Some(d) => digit = d as f32,
+                        None => {
+                            println!("Failed to parse {} as digit", ch);
+                        }
+                    }
+                    number = 10.0 * number + digit;
+                    ch = self.march_pos();
+                }
+                if ch == '.' {
+                    ch = self.march_pos();
+                    let mut exp = -1;
+                    while ch.is_digit(10) {
+                        let get_digit = ch.to_digit(10);
+                        let mut digit: f32 = 0.0;
+                        match get_digit {
+                            Some(d) => digit = d as f32,
+                            None => {
+                                println!("Failed to parse {} as digit", ch);
+                            }
+                        }
+                        number = number + digit * f32::powi(10.0, exp);
+                        exp -= 1;
+                        ch = self.march_pos();
+                    }
+                }
+                ch = self.unmarch_pos();
+                self.curr_tok.token_type = TokType::Number;
+                self.curr_tok.token_content = format!("{number}");
             }
+            '.' => self.curr_tok.token_type = TokType::Period,
             _ => {
                 println!("Unknown character: {} ", ch);
                 ()
             }
         }
-        println!("Found token {:#?} with {}", self.curr_tok.token_type, ch);
+        println!(
+            "Found token {:#?} with {}, {}",
+            self.curr_tok.token_type, ch, self.curr_tok.token_content
+        );
 
         self.march_pos();
     }
@@ -174,5 +213,23 @@ mod tests {
         lexer.get_next_token();
         assert_eq!(lexer.curr_tok.token_type, TokType::Newl);
         assert_eq!(lexer.curr_pos, 9);
+    }
+
+    #[test]
+    fn test_lexer_numbers() {
+        let string = String::from("2.3\n");
+        let mut lexer = Lexer {
+            current_line: string.clone(),
+            line_size: string.len(),
+            curr_pos: 0,
+            curr_tok: Token {
+                token_type: TokType::End,
+                token_content: String::from(""),
+            },
+        };
+        lexer.get_next_token();
+        let token = lexer.curr_tok;
+        assert_eq!(token.token_type, TokType::Number);
+        assert_eq!(token.token_content, String::from("2.3"));
     }
 }
