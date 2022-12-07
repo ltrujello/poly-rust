@@ -94,7 +94,18 @@ impl Lexer {
             '(' => self.curr_tok.token_type = TokType::Lpar,
             ')' => self.curr_tok.token_type = TokType::Rpar,
             '=' => self.curr_tok.token_type = TokType::Equal,
-            'x' | 'y' | 'z' => self.curr_tok.token_type = TokType::Xvar,
+            'x' => {
+                self.curr_tok.token_type = TokType::Xvar;
+                self.curr_tok.token_content = String::from("x");
+            }
+            'y' => {
+                self.curr_tok.token_type = TokType::Xvar;
+                self.curr_tok.token_content = String::from("y");
+            }
+            'z' => {
+                self.curr_tok.token_type = TokType::Xvar;
+                self.curr_tok.token_content = String::from("z");
+            }
             '^' => self.curr_tok.token_type = TokType::Caret,
             '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' => {
                 let mut number = 0.0;
@@ -141,6 +152,8 @@ impl Lexer {
             "Found token {:#?} with {}, {}",
             self.curr_tok.token_type, ch, self.curr_tok.token_content
         );
+        // let mut buffer = String::new();
+        // io::stdin().read_line(&mut buffer);
 
         self.march_pos();
     }
