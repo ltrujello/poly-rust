@@ -56,11 +56,11 @@ impl Lexer {
     }
 
     pub fn march_pos(&mut self) -> char {
-        if self.curr_pos < self.line_size - 1 {
+        if self.curr_pos < self.line_size {
             self.curr_pos += 1;
-        } else {
-            println!("Invalid attempt to move after the last character of input");
-            return self.current_line.chars().nth(self.curr_pos).unwrap();
+        }
+        if self.curr_pos == self.line_size {
+            return ' ';
         }
         return self.current_line.chars().nth(self.curr_pos).unwrap();
     }
@@ -76,6 +76,11 @@ impl Lexer {
     }
 
     pub fn get_next_token(&mut self) -> () {
+        if self.curr_pos == self.line_size {
+            println!("No more characters!");
+            self.curr_tok.token_type = TokType::End;
+            return ();
+        }
         let mut ch = self.get_curr_char();
 
         while ch == ' ' {
@@ -83,10 +88,7 @@ impl Lexer {
         }
 
         match ch {
-            '\n' => {
-                self.curr_tok.token_type = TokType::Newl;
-                return ();
-            }
+            '\n' => self.curr_tok.token_type = TokType::Newl,
             '*' => self.curr_tok.token_type = TokType::Mul,
             '/' => self.curr_tok.token_type = TokType::Div,
             '+' => self.curr_tok.token_type = TokType::Plus,
@@ -149,11 +151,9 @@ impl Lexer {
             }
         }
         println!(
-            "Found token {:#?} with {}, {}",
+            "Found token {:#?} with {}, {} meow",
             self.curr_tok.token_type, ch, self.curr_tok.token_content
         );
-        // let mut buffer = String::new();
-        // io::stdin().read_line(&mut buffer);
 
         self.march_pos();
     }
@@ -162,8 +162,11 @@ impl Lexer {
 pub fn tokenize(mut lexer: Lexer) {
     let mut ind = 0;
     lexer.get_next_token();
-    while lexer.curr_tok.token_type != TokType::Newl {
-        if lexer.curr_pos == lexer.line_size - 1 {
+    loop {
+        if lexer.curr_tok.token_type == TokType::Newl {
+            break;
+        }
+        if lexer.curr_tok.token_type == TokType::End {
             break;
         }
         lexer.get_next_token();
@@ -193,7 +196,7 @@ mod tests {
         };
         lexer.get_next_token();
         assert_eq!(lexer.curr_tok.token_type, TokType::Xvar);
-        assert_eq!(lexer.curr_pos, 0);
+        assert_eq!(lexer.curr_pos, 1);
     }
 
     #[test]
@@ -225,7 +228,7 @@ mod tests {
         assert_eq!(lexer.curr_pos, 9);
         lexer.get_next_token();
         assert_eq!(lexer.curr_tok.token_type, TokType::Newl);
-        assert_eq!(lexer.curr_pos, 9);
+        assert_eq!(lexer.curr_pos, 10);
     }
 
     #[test]
