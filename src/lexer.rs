@@ -151,7 +151,7 @@ impl Lexer {
             }
         }
         println!(
-            "Found token {:#?} with {}, {} meow",
+            "Found token {:#?} with {}, {}",
             self.curr_tok.token_type, ch, self.curr_tok.token_content
         );
 

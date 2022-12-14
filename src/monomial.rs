@@ -12,8 +12,8 @@ pub struct Monomial {
 
 impl Monomial {
     pub fn cmp_terms(&self, other: &Self) -> Ordering {
-        let degree_a: i32 = self.power_list.iter().sum();
-        let degree_b: i32 = other.power_list.iter().sum();
+        let degree_a: i32 = self.get_degree();
+        let degree_b: i32 = other.get_degree();
 
         if degree_a < degree_b {
             return Ordering::Less;
@@ -66,6 +66,10 @@ impl Monomial {
             None => power = 0,
         }
         power
+    }
+
+    pub fn get_degree(&self) -> i32 {
+        self.power_list.iter().sum()
     }
 }
 
