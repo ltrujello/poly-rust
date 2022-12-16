@@ -35,7 +35,12 @@ impl Polynomial {
         if first_term.coefficient < 0.0 {
             output.push_str("-");
         }
-        output.push_str(&format!("{coeff}{term_expr}"));
+        if coeff == 1.0 {
+            output.push_str(&format!("{term_expr}"));
+        }
+        else {
+            output.push_str(&format!("{coeff}{term_expr}"));
+        }
 
         // print the remainder of the terms
         for ind in 1..self.monomials.len() {
@@ -47,7 +52,12 @@ impl Polynomial {
             }
             let coeff = monomial.coefficient.abs();
             let term_expr = monomial.term_expr();
-            output.push_str(&format!("{coeff}{term_expr}"));
+            if coeff == 1.0 {
+                output.push_str(&format!("{term_expr}"));
+            }
+            else {
+                output.push_str(&format!("{coeff}{term_expr}"));
+            }
         }
         output
     }

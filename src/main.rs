@@ -12,7 +12,6 @@ pub use crate::parser::Parser;
 pub use crate::polynomial::Polynomial;
 use std::io;
 
-
 fn main() {
     env_logger::init();
     // let mut buffer = String::new();
@@ -30,10 +29,10 @@ fn main() {
     // };
     // tokenize(lexer)
 
-    let mut parser = Parser::parser_init(String::from("x^300000y^2z^50\n"));
-    let parsed_res = parser.parse_monomial();
-    match parsed_res{
-        Ok(v) => println!("{}", v),
+    let mut parser = Parser::parser_init(String::from("x + y + z\n"));
+    let mut parsed_res = parser.parse_polynomial();
+    match parsed_res {
+        Ok(v) => println!("{:?}", v.expr()),
         Err(e) => println!("{}", e),
     }
 }

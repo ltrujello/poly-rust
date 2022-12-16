@@ -40,20 +40,40 @@ impl Monomial {
 
     pub fn expr(&self) -> String {
         let mut output: String = String::from("");
-        format!("{}{}", self.coefficient, self.term_expr())
+        if self.coefficient == 1.0 {
+            format!("{}", self.term_expr())
+        }
+        else{
+            format!("{}{}", self.coefficient, self.term_expr())
+        }
     }
 
     pub fn term_expr(&self) -> String {
         let mut output: String = String::from("");
         for (ind, &power) in self.power_list.iter().enumerate() {
             if ind == 0 && power > 0 {
-                output.push_str(&format!("x^{power}"));
+                if power == 1 {
+                    output.push_str(&format!("x"));
+                }
+                else {
+                    output.push_str(&format!("x^{power}"));
+                }
             }
             if ind == 1 && power > 0 {
-                output.push_str(&format!("y^{power}"));
+                if power == 1 {
+                    output.push_str(&format!("y"));
+                }
+                else {
+                    output.push_str(&format!("y^{power}"));
+                }
             }
             if ind == 2 && power > 0 {
-                output.push_str(&format!("z^{power}"));
+                if power == 1 {
+                    output.push_str(&format!("z"));
+                }
+                else {
+                    output.push_str(&format!("z^{power}"));
+                }
             }
         }
         output

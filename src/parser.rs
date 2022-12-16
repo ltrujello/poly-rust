@@ -1,5 +1,6 @@
 use crate::lexer::{Lexer, TokType, Token};
 use crate::monomial::Monomial;
+use crate::polynomial::Polynomial;
 use std::time::Instant;
 
 pub struct Parser {
@@ -17,12 +18,34 @@ impl Parser {
                 token_content: String::from(""),
             },
         };
-        Parser { lexer: lexer }
+        let mut parser = Parser { lexer: lexer };
+        parser.lexer.get_next_token();
+        parser
+    }
+
+    pub fn parse_polynomial(&mut self) -> Result<Polynomial, String> {
+        let now = Instant::now();
+
+        let mut polynomial = Polynomial::new();
+        while true {
+            if self.lexer.curr_tok.token_type == TokType::Xvar {
+                let monomial_res = self.parse_monomial()?;
+                polynomial += monomial_res;
+            }
+            match self.lexer.curr_tok.token_type {
+                TokType::Plus | TokType::Minus => self.lexer.get_next_token(),
+                _ => break,
+            }
+        }
+        let elapsed = now.elapsed();
+        info!("Parsed {} in {:.5?}", self.lexer.current_line, elapsed);
+
+        Ok(polynomial)
     }
 
     pub fn parse_monomial(&mut self) -> Result<Monomial, String> {
         let now = Instant::now();
-        self.lexer.get_next_token();
+        //self.lexer.get_next_token();
         let coefficient = 1.0;
         let mut power_list = vec![0; 3];
         loop {
@@ -56,14 +79,8 @@ impl Parser {
                     exponent = 1;
                 }
                 power_list[ind] = exponent;
-            }
-            else {
-                if self.lexer.curr_tok.token_type == TokType::Newl {
-                    break;
-                }
-                error!("received unexpected token {:?}", self.lexer.curr_tok.token_type);
-                return Err(format!("received unexpected token {:?}", self.lexer.curr_tok.token_type));
-            }
+            } 
+
             if prev_position == self.lexer.curr_pos {
                 break;
             }
@@ -88,18 +105,21 @@ mod tests {
         let mut monomial = parser.parse_monomial().unwrap();
 
         assert_eq!(monomial.coefficient, 1.0);
+        assert_eq!(monomial.get_power(0), 1);
         assert_eq!(monomial.get_degree(), 1);
 
         parser = Parser::parser_init(String::from("y\n"));
         monomial = parser.parse_monomial().unwrap();
 
         assert_eq!(monomial.coefficient, 1.0);
+        assert_eq!(monomial.get_power(1), 1);
         assert_eq!(monomial.get_degree(), 1);
 
         parser = Parser::parser_init(String::from("z\n"));
         monomial = parser.parse_monomial().unwrap();
 
         assert_eq!(monomial.coefficient, 1.0);
+        assert_eq!(monomial.get_power(2), 1);
         assert_eq!(monomial.get_degree(), 1);
     }
 
@@ -107,8 +127,10 @@ mod tests {
         let mut parser = Parser::parser_init(String::from("xyz\n"));
         let mut monomial = parser.parse_monomial().unwrap();
         assert_eq!(monomial.coefficient, 1.0);
+        assert_eq!(monomial.get_power(0), 1);
+        assert_eq!(monomial.get_power(1), 1);
+        assert_eq!(monomial.get_power(2), 1);
         assert_eq!(monomial.get_degree(), 3);
-
     }
 
     fn parser_monomial_multivariate_2() {
