@@ -1,3 +1,6 @@
+#[macro_use]
+extern crate log;
+
 mod lexer;
 mod monomial;
 mod parser;
@@ -9,7 +12,9 @@ pub use crate::parser::Parser;
 pub use crate::polynomial::Polynomial;
 use std::io;
 
+
 fn main() {
+    env_logger::init();
     // let mut buffer = String::new();
     // io::stdin().read_line(&mut buffer);
 
@@ -26,6 +31,9 @@ fn main() {
     // tokenize(lexer)
 
     let mut parser = Parser::parser_init(String::from("x^300000y^2z^50\n"));
-    let monomial = parser.parse_monomial();
-    println!("{}", monomial);
+    let parsed_res = parser.parse_monomial();
+    match parsed_res{
+        Ok(v) => println!("{}", v),
+        Err(e) => println!("{}", e),
+    }
 }

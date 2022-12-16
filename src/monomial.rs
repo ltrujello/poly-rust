@@ -313,7 +313,6 @@ mod tests {
             power_list: vec![2, 1],
         };
         let order = monomial_a > monomial_b;
-        println!("{}", order);
     }
 
     #[test]

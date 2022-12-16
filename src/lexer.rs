@@ -50,7 +50,7 @@ impl Lexer {
 
     pub fn get_curr_char(&self) -> char {
         if self.curr_pos > self.line_size {
-            println!("Invalid value for curr_pos {}", self.curr_pos);
+            panic!("Invalid value for curr_pos {}", self.curr_pos);
         }
         return self.current_line.chars().nth(self.curr_pos).unwrap();
     }
@@ -69,7 +69,7 @@ impl Lexer {
         if self.curr_pos > 0 {
             self.curr_pos -= 1;
         } else {
-            println!("Invalid attempt to move before the first character of input");
+            warn!("Invalid attempt to move before the first character of input");
             return self.current_line.chars().nth(self.curr_pos).unwrap();
         }
         return self.current_line.chars().nth(self.curr_pos).unwrap();
@@ -77,7 +77,7 @@ impl Lexer {
 
     pub fn get_next_token(&mut self) -> () {
         if self.curr_pos == self.line_size {
-            println!("No more characters!");
+            debug!("No more characters!");
             self.curr_tok.token_type = TokType::End;
             return ();
         }
@@ -117,7 +117,7 @@ impl Lexer {
                     match get_digit {
                         Some(d) => digit = d as f32,
                         None => {
-                            println!("Failed to parse {} as digit", ch);
+                            error!("Failed to parse {} as digit", ch);
                         }
                     }
                     number = 10.0 * number + digit;
@@ -132,7 +132,7 @@ impl Lexer {
                         match get_digit {
                             Some(d) => digit = d as f32,
                             None => {
-                                println!("Failed to parse {} as digit", ch);
+                                error!("Failed to parse {} as digit", ch);
                             }
                         }
                         number = number + digit * f32::powi(10.0, exp);
@@ -146,11 +146,11 @@ impl Lexer {
             }
             '.' => self.curr_tok.token_type = TokType::Period,
             _ => {
-                println!("Unknown character: {} ", ch);
+                error!("Unknown character: {} ", ch);
                 ()
             }
         }
-        println!(
+        info!(
             "Found token {:#?} with {}, {}",
             self.curr_tok.token_type, ch, self.curr_tok.token_content
         );
