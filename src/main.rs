@@ -10,7 +10,6 @@ pub use crate::lexer::{tokenize, Lexer, TokType, Token};
 pub use crate::monomial::Monomial;
 pub use crate::parser::Parser;
 pub use crate::polynomial::Polynomial;
-use std::io;
 
 fn main() {
     env_logger::init();
@@ -29,10 +28,10 @@ fn main() {
     // };
     // tokenize(lexer)
 
-    let mut parser = Parser::parser_init(String::from("x + y + z\n"));
-    let mut parsed_res = parser.parse_polynomial();
-    match parsed_res {
-        Ok(v) => println!("{:?}", v.expr()),
-        Err(e) => println!("{}", e),
-    }
+    let polynomial = Polynomial::from("2xyz + yzx + zxy + xy").unwrap();
+    println!("{:?}", polynomial);
+    println!("{}", polynomial.expr());
+
+    let monomial = Monomial::from("2xyz").unwrap();
+    println!("{}", monomial.expr())
 }

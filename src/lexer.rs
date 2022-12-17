@@ -1,5 +1,3 @@
-use std::io;
-
 #[derive(PartialEq, Debug)]
 pub enum TokType {
     Exit,
@@ -36,7 +34,7 @@ pub struct Lexer {
 }
 
 impl Lexer {
-    fn lexer_init(current_line: String) -> Self {
+    pub fn lexer_init(current_line: String) -> Self {
         Lexer {
             current_line: current_line.clone(),
             line_size: current_line.len(),
@@ -77,7 +75,6 @@ impl Lexer {
 
     pub fn get_next_token(&mut self) -> () {
         if self.curr_pos == self.line_size {
-            debug!("No more characters!");
             self.curr_tok.token_type = TokType::End;
             return ();
         }
@@ -150,7 +147,7 @@ impl Lexer {
                 ()
             }
         }
-        info!(
+        debug!(
             "Found token {:#?} with {}, {}",
             self.curr_tok.token_type, ch, self.curr_tok.token_content
         );
@@ -182,7 +179,7 @@ mod tests {
     use super::*;
     use rstest::*;
 
-    #[test]
+    #[rstest]
     fn test_get_next_token_one_char() {
         let string = String::from("x");
         let mut lexer = Lexer {
@@ -199,7 +196,7 @@ mod tests {
         assert_eq!(lexer.curr_pos, 1);
     }
 
-    #[test]
+    #[rstest]
     fn test_get_next_token_initial() {
         let string = String::from("x + y + z\n");
         let mut lexer = Lexer {
@@ -231,7 +228,7 @@ mod tests {
         assert_eq!(lexer.curr_pos, 10);
     }
 
-    #[test]
+    #[rstest]
     fn test_lexer_numbers() {
         let string = String::from("2.3\n");
         let mut lexer = Lexer {

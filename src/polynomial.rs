@@ -1,3 +1,4 @@
+use crate::parser::Parser;
 use std::clone::Clone;
 use std::cmp::Ordering;
 use std::ops;
@@ -18,7 +19,7 @@ impl Polynomial {
 
     pub fn insert_monomial(&mut self, monomial: Monomial) {
         match self.monomials.binary_search(&monomial) {
-            Ok(pos) => {}
+            Ok(_) => {}
             Err(pos) => self.monomials.insert(pos, monomial),
         }
     }
@@ -37,8 +38,7 @@ impl Polynomial {
         }
         if coeff == 1.0 {
             output.push_str(&format!("{term_expr}"));
-        }
-        else {
+        } else {
             output.push_str(&format!("{coeff}{term_expr}"));
         }
 
@@ -54,8 +54,7 @@ impl Polynomial {
             let term_expr = monomial.term_expr();
             if coeff == 1.0 {
                 output.push_str(&format!("{term_expr}"));
-            }
-            else {
+            } else {
                 output.push_str(&format!("{coeff}{term_expr}"));
             }
         }
@@ -64,6 +63,12 @@ impl Polynomial {
 
     pub fn print_polynomial(&self) {
         println!("{}", self.expr());
+    }
+
+    pub fn from(expr: &str) -> Result<Polynomial, String> {
+        let mut parser = Parser::parser_init(String::from(expr));
+        let polynomial = parser.parse_polynomial()?;
+        Ok(polynomial)
     }
 }
 
@@ -78,13 +83,17 @@ impl Clone for Polynomial {
 // Polynomial += Monomial
 impl ops::AddAssign<Monomial> for Polynomial {
     fn add_assign(&mut self, other: Monomial) {
-        for mut monomial in self.monomials.iter_mut() {
-            if monomial.cmp_terms(&other) == Ordering::Equal {
-                monomial.coefficient += other.coefficient;
-                return;
+        match self
+            .monomials
+            .binary_search_by(|monomial| monomial.cmp_terms(&other))
+        {
+            Ok(pos) => {
+                self.monomials[pos].coefficient += other.coefficient;
+            }
+            Err(pos) => {
+                self.monomials.insert(pos, other);
             }
         }
-        self.insert_monomial(other);
     }
 }
 
@@ -240,5 +249,22 @@ mod tests {
     fn test_addition_1(polynomial_a: Polynomial, polynomial_b: Polynomial) {
         let polynomial = polynomial_b + polynomial_a;
         assert_eq!(polynomial.expr(), "13y^2 + 5x^2");
+    }
+
+    #[rstest]
+    fn test_polynomial_from_str_a() {
+        let polynomial = Polynomial::from("2x + y + z + 2x + y + y + y + z").unwrap();
+        assert_eq!(polynomial.monomials.len(), 3);
+        assert_eq!(polynomial.monomials[0].expr().as_str(), "2z");
+        assert_eq!(polynomial.monomials[1].expr().as_str(), "4y");
+        assert_eq!(polynomial.monomials[2].expr().as_str(), "4x");
+    }
+
+    #[rstest]
+    fn test_polynomial_from_str_b() {
+        let polynomial = Polynomial::from("2xyz + yzx + zxy + xy").unwrap();
+        assert_eq!(polynomial.monomials.len(), 2);
+        assert_eq!(polynomial.monomials[0].coefficient, 1.0);
+        assert_eq!(polynomial.monomials[1].coefficient, 4.0);
     }
 }

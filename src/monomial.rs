@@ -1,5 +1,5 @@
+use crate::parser::Parser;
 use std::clone::Clone;
-use std::cmp;
 use std::cmp::Ordering;
 use std::fmt;
 use std::ops;
@@ -41,11 +41,11 @@ impl Monomial {
     pub fn expr(&self) -> String {
         let mut output: String = String::from("");
         if self.coefficient == 1.0 {
-            format!("{}", self.term_expr())
+            output.push_str(&format!("{}", self.term_expr()));
+        } else {
+            output.push_str(&format!("{}{}", self.coefficient, self.term_expr()));
         }
-        else{
-            format!("{}{}", self.coefficient, self.term_expr())
-        }
+        output
     }
 
     pub fn term_expr(&self) -> String {
@@ -54,24 +54,21 @@ impl Monomial {
             if ind == 0 && power > 0 {
                 if power == 1 {
                     output.push_str(&format!("x"));
-                }
-                else {
+                } else {
                     output.push_str(&format!("x^{power}"));
                 }
             }
             if ind == 1 && power > 0 {
                 if power == 1 {
                     output.push_str(&format!("y"));
-                }
-                else {
+                } else {
                     output.push_str(&format!("y^{power}"));
                 }
             }
             if ind == 2 && power > 0 {
                 if power == 1 {
                     output.push_str(&format!("z"));
-                }
-                else {
+                } else {
                     output.push_str(&format!("z^{power}"));
                 }
             }
@@ -90,6 +87,12 @@ impl Monomial {
 
     pub fn get_degree(&self) -> i32 {
         self.power_list.iter().sum()
+    }
+
+    pub fn from(expr: &str) -> Result<Monomial, String> {
+        let mut parser = Parser::parser_init(String::from(expr));
+        let monomial = parser.parse_monomial()?;
+        Ok(monomial)
     }
 }
 
@@ -199,7 +202,7 @@ mod tests {
     use super::*;
     use rstest::*;
 
-    #[test]
+    #[rstest]
     fn test_equality() {
         // xyz == xyz, 5xyz == 5xyz
         let monomial_a = Monomial {
@@ -223,7 +226,7 @@ mod tests {
         assert_eq!(monomial_a, monomial_b);
     }
 
-    #[test]
+    #[rstest]
     fn test_ordering_a() {
         // 6x > 5x
         let monomial_a = Monomial {
@@ -237,7 +240,7 @@ mod tests {
         assert!(monomial_a < monomial_b);
     }
 
-    #[test]
+    #[rstest]
     fn test_ordering_b() {
         // x^2 > xy
         let monomial_a = Monomial {
@@ -251,7 +254,7 @@ mod tests {
         assert!(monomial_a > monomial_b);
     }
 
-    #[test]
+    #[rstest]
     fn test_ordering_c() {
         // xy > y^2
         let monomial_a = Monomial {
@@ -265,7 +268,7 @@ mod tests {
         assert!(monomial_a > monomial_b);
     }
 
-    #[test]
+    #[rstest]
     fn test_ordering_d() {
         // y^2 > xz
         let monomial_a = Monomial {
@@ -279,7 +282,7 @@ mod tests {
         assert!(monomial_a > monomial_b);
     }
 
-    #[test]
+    #[rstest]
     fn test_ordering_e() {
         // xz > yz
         let monomial_a = Monomial {
@@ -293,7 +296,7 @@ mod tests {
         assert!(monomial_a > monomial_b);
     }
 
-    #[test]
+    #[rstest]
     fn test_ordering_f() {
         // yz > z^2
         let monomial_a = Monomial {
@@ -307,7 +310,7 @@ mod tests {
         assert!(monomial_a > monomial_b);
     }
 
-    #[test]
+    #[rstest]
     fn test_ordering_g() {
         // x^5y > x^2yz^3
         let monomial_a = Monomial {
@@ -321,7 +324,7 @@ mod tests {
         assert!(monomial_a > monomial_b);
     }
 
-    #[test]
+    #[rstest]
     fn test_ordering_h() {
         // x^3 > x^2y
         let monomial_a = Monomial {
@@ -332,10 +335,10 @@ mod tests {
             coefficient: 1.0,
             power_list: vec![2, 1],
         };
-        let order = monomial_a > monomial_b;
+        assert!(monomial_a > monomial_b);
     }
 
-    #[test]
+    #[rstest]
     fn test_mul_a() {
         let monomial_a = Monomial {
             coefficient: 5.0,
@@ -350,7 +353,7 @@ mod tests {
         assert_eq!(monomial_c.power_list, [2, 2, 0]);
     }
 
-    #[test]
+    #[rstest]
     fn test_mul_b() {
         let monomial_a = Monomial {
             coefficient: 5.0,
@@ -365,7 +368,7 @@ mod tests {
         assert_eq!(monomial_c.power_list, [2, 2, 3]);
     }
 
-    #[test]
+    #[rstest]
     fn test_mul_zero() {
         let monomial_a = Monomial {
             coefficient: 0.0,
@@ -378,5 +381,27 @@ mod tests {
         let monomial_c = monomial_a * monomial_b;
         assert_eq!(monomial_c.coefficient, 0.0);
         assert_eq!(monomial_c.power_list, [0, 0, 0]);
+    }
+
+    #[rstest]
+    fn test_monomial_from_str_a() {
+        let monomial = Monomial::from("xyz").unwrap();
+
+        assert_eq!(monomial.coefficient, 1.0);
+        assert_eq!(monomial.get_power(0), 1);
+        assert_eq!(monomial.get_power(1), 1);
+        assert_eq!(monomial.get_power(2), 1);
+        assert_eq!(monomial.get_degree(), 3);
+    }
+
+    #[rstest]
+    fn test_monomial_from_str_b() {
+        let monomial = Monomial::from("3.5x^2yz^5").unwrap();
+
+        assert_eq!(monomial.coefficient, 3.5);
+        assert_eq!(monomial.get_degree(), 8);
+        assert_eq!(monomial.get_power(0), 2);
+        assert_eq!(monomial.get_power(1), 1);
+        assert_eq!(monomial.get_power(2), 5);
     }
 }
