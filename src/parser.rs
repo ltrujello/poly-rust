@@ -11,7 +11,7 @@ impl Parser {
     pub fn parser_init(current_line: String) -> Self {
         let lexer = Lexer::lexer_init(current_line);
         let mut parser = Parser { lexer: lexer };
-        parser.lexer.get_next_token();
+        parser.lexer.get_next_token().unwrap();
         parser
     }
 
@@ -24,12 +24,12 @@ impl Parser {
                     let monomial_res = self.parse_monomial()?;
                     polynomial += monomial_res;
                 }
-                TokType::Plus | TokType::Minus => self.lexer.get_next_token(),
+                TokType::Plus | TokType::Minus => self.lexer.get_next_token().unwrap(),
                 _ => break,
             }
         }
         let elapsed = now.elapsed();
-        info!("Parsed {} in {:.5?}", self.lexer.current_line, elapsed);
+        info!("Parsed {:?} in {:.5?}", self.lexer.current_line, elapsed);
 
         Ok(polynomial)
     }
@@ -39,7 +39,7 @@ impl Parser {
         let mut coefficient = 1.0;
         if self.lexer.curr_tok.token_type == TokType::Number {
             coefficient = self.lexer.curr_tok.token_content.parse::<f64>().unwrap();
-            self.lexer.get_next_token();
+            self.lexer.get_next_token().unwrap();
         }
         let mut power_list = vec![0; 3];
         loop {
@@ -60,17 +60,17 @@ impl Parser {
                         return Err(String::from("Received unknown token content"));
                     }
                 }
-                self.lexer.get_next_token();
+                self.lexer.get_next_token().unwrap();
                 let exponent: i32;
                 // get caret
                 if self.lexer.curr_tok.token_type == TokType::Caret {
-                    self.lexer.get_next_token();
+                    self.lexer.get_next_token().unwrap();
                     // get number
                     if self.lexer.curr_tok.token_type != TokType::Number {
                         return Err(String::from("Expected TokType::Number after ^"));
                     }
                     exponent = self.lexer.curr_tok.token_content.parse::<i32>().unwrap();
-                    self.lexer.get_next_token();
+                    self.lexer.get_next_token().unwrap();
                 } else {
                     exponent = 1;
                 }
@@ -82,7 +82,7 @@ impl Parser {
             }
         }
         let elapsed = now.elapsed();
-        debug!("Parsed {} in {:.5?}", self.lexer.current_line, elapsed);
+        debug!("Parsed {:?} in {:.5?}", self.lexer.current_line, elapsed);
         Ok(Monomial {
             coefficient,
             power_list,

@@ -1,3 +1,5 @@
+use std::str::Chars;
+
 #[derive(PartialEq, Debug)]
 pub enum TokType {
     Exit,
@@ -27,16 +29,24 @@ pub struct Token {
 }
 
 pub struct Lexer {
-    pub current_line: String,
+    pub current_line: Vec<char>,
     pub line_size: usize,
     pub curr_pos: usize,
     pub curr_tok: Token,
 }
 
+#[derive(Debug)]
+pub enum LexerError {
+    InvalidCharPos,
+    UnexpectedChar,
+    UnknownChar,
+    EndOfInput,
+}
+
 impl Lexer {
     pub fn lexer_init(current_line: String) -> Self {
         Lexer {
-            current_line: current_line.clone(),
+            current_line: current_line.clone().chars().collect(),
             line_size: current_line.len(),
             curr_pos: 0,
             curr_tok: Token {
@@ -46,42 +56,45 @@ impl Lexer {
         }
     }
 
-    pub fn get_curr_char(&self) -> char {
+    pub fn get_curr_char(&self) -> Result<char, LexerError> {
         if self.curr_pos > self.line_size {
-            panic!("Invalid value for curr_pos {}", self.curr_pos);
+            error!("Invalid value for curr_pos {}", self.curr_pos);
+            return Err(LexerError::InvalidCharPos);
         }
-        return self.current_line.chars().nth(self.curr_pos).unwrap();
+        Ok(self.current_line[self.curr_pos])
     }
 
-    pub fn march_pos(&mut self) -> char {
+    pub fn march_pos(&mut self) -> Result<char, LexerError> {
         if self.curr_pos < self.line_size {
             self.curr_pos += 1;
         }
         if self.curr_pos == self.line_size {
-            return ' ';
+            debug!("Reached the end of input");
+            return Ok(' ');
         }
-        return self.current_line.chars().nth(self.curr_pos).unwrap();
+        Ok(self.current_line[self.curr_pos])
     }
 
-    pub fn unmarch_pos(&mut self) -> char {
+    pub fn unmarch_pos(&mut self) -> Result<char, LexerError> {
         if self.curr_pos > 0 {
             self.curr_pos -= 1;
         } else {
-            warn!("Invalid attempt to move before the first character of input");
-            return self.current_line.chars().nth(self.curr_pos).unwrap();
+            error!("Invalid attempt to move before the first character of input");
+            return Err(LexerError::InvalidCharPos);
         }
-        return self.current_line.chars().nth(self.curr_pos).unwrap();
+        Ok(self.current_line[self.curr_pos])
     }
 
-    pub fn get_next_token(&mut self) -> () {
+    pub fn get_next_token(&mut self) -> Result<(), LexerError> {
         if self.curr_pos == self.line_size {
             self.curr_tok.token_type = TokType::End;
-            return ();
+            debug!("No more input, returning tok {:?}", TokType::End);
+            return Ok(());
         }
-        let mut ch = self.get_curr_char();
+        let mut ch = self.get_curr_char()?;
 
         while ch == ' ' {
-            ch = self.march_pos();
+            ch = self.march_pos()?;
         }
 
         match ch {
@@ -109,42 +122,28 @@ impl Lexer {
             '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' => {
                 let mut number = 0.0;
                 while ch.is_digit(10) {
-                    let get_digit = ch.to_digit(10);
-                    let mut digit: f32 = 0.0;
-                    match get_digit {
-                        Some(d) => digit = d as f32,
-                        None => {
-                            error!("Failed to parse {} as digit", ch);
-                        }
-                    }
+                    let digit = ch.to_digit(10).unwrap() as f32;
                     number = 10.0 * number + digit;
-                    ch = self.march_pos();
+                    ch = self.march_pos()?;
                 }
                 if ch == '.' {
-                    ch = self.march_pos();
+                    ch = self.march_pos()?;
                     let mut exp = -1;
                     while ch.is_digit(10) {
-                        let get_digit = ch.to_digit(10);
-                        let mut digit: f32 = 0.0;
-                        match get_digit {
-                            Some(d) => digit = d as f32,
-                            None => {
-                                error!("Failed to parse {} as digit", ch);
-                            }
-                        }
+                        let digit = ch.to_digit(10).unwrap() as f32;
                         number = number + digit * f32::powi(10.0, exp);
                         exp -= 1;
-                        ch = self.march_pos();
+                        ch = self.march_pos()?;
                     }
                 }
-                ch = self.unmarch_pos();
+                ch = self.unmarch_pos()?; // went too far in last loop
                 self.curr_tok.token_type = TokType::Number;
                 self.curr_tok.token_content = format!("{number}");
             }
             '.' => self.curr_tok.token_type = TokType::Period,
             _ => {
                 error!("Unknown character: {} ", ch);
-                ()
+                return Err(LexerError::UnknownChar);
             }
         }
         debug!(
@@ -152,13 +151,14 @@ impl Lexer {
             self.curr_tok.token_type, ch, self.curr_tok.token_content
         );
 
-        self.march_pos();
+        self.march_pos()?;
+        Ok(())
     }
 }
 
-pub fn tokenize(mut lexer: Lexer) {
+pub fn tokenize(mut lexer: Lexer) -> Result<(), LexerError> {
     let mut ind = 0;
-    lexer.get_next_token();
+    lexer.get_next_token()?;
     loop {
         if lexer.curr_tok.token_type == TokType::Newl {
             break;
@@ -166,12 +166,13 @@ pub fn tokenize(mut lexer: Lexer) {
         if lexer.curr_tok.token_type == TokType::End {
             break;
         }
-        lexer.get_next_token();
+        lexer.get_next_token()?;
         ind += 1;
         if ind > 100 {
             break;
         }
     }
+    Ok(())
 }
 
 #[cfg(test)]
@@ -182,15 +183,7 @@ mod tests {
     #[rstest]
     fn test_get_next_token_one_char() {
         let string = String::from("x");
-        let mut lexer = Lexer {
-            current_line: string.clone(),
-            line_size: string.len(),
-            curr_pos: 0,
-            curr_tok: Token {
-                token_type: TokType::End,
-                token_content: String::from(""),
-            },
-        };
+        let mut lexer = Lexer::lexer_init(string);
         lexer.get_next_token();
         assert_eq!(lexer.curr_tok.token_type, TokType::Xvar);
         assert_eq!(lexer.curr_pos, 1);
@@ -199,15 +192,8 @@ mod tests {
     #[rstest]
     fn test_get_next_token_initial() {
         let string = String::from("x + y + z\n");
-        let mut lexer = Lexer {
-            current_line: string.clone(),
-            line_size: string.len(),
-            curr_pos: 0,
-            curr_tok: Token {
-                token_type: TokType::End,
-                token_content: String::from(""),
-            },
-        };
+        let mut lexer = Lexer::lexer_init(string);
+
         lexer.get_next_token();
         assert_eq!(lexer.curr_tok.token_type, TokType::Xvar);
         assert_eq!(lexer.curr_pos, 1);
@@ -231,15 +217,8 @@ mod tests {
     #[rstest]
     fn test_lexer_numbers() {
         let string = String::from("2.3\n");
-        let mut lexer = Lexer {
-            current_line: string.clone(),
-            line_size: string.len(),
-            curr_pos: 0,
-            curr_tok: Token {
-                token_type: TokType::End,
-                token_content: String::from(""),
-            },
-        };
+        let mut lexer = Lexer::lexer_init(string);
+
         lexer.get_next_token();
         let token = lexer.curr_tok;
         assert_eq!(token.token_type, TokType::Number);
