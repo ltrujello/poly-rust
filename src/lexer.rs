@@ -1,5 +1,3 @@
-use std::str::Chars;
-
 #[derive(PartialEq, Debug)]
 pub enum TokType {
     Exit,
@@ -184,7 +182,7 @@ mod tests {
     fn test_get_next_token_one_char() {
         let string = String::from("x");
         let mut lexer = Lexer::lexer_init(string);
-        lexer.get_next_token();
+        lexer.get_next_token().unwrap();
         assert_eq!(lexer.curr_tok.token_type, TokType::Xvar);
         assert_eq!(lexer.curr_pos, 1);
     }
@@ -194,22 +192,22 @@ mod tests {
         let string = String::from("x + y + z\n");
         let mut lexer = Lexer::lexer_init(string);
 
-        lexer.get_next_token();
+        lexer.get_next_token().unwrap();
         assert_eq!(lexer.curr_tok.token_type, TokType::Xvar);
         assert_eq!(lexer.curr_pos, 1);
-        lexer.get_next_token();
+        lexer.get_next_token().unwrap();
         assert_eq!(lexer.curr_tok.token_type, TokType::Plus);
         assert_eq!(lexer.curr_pos, 3);
-        lexer.get_next_token();
+        lexer.get_next_token().unwrap();
         assert_eq!(lexer.curr_tok.token_type, TokType::Xvar);
         assert_eq!(lexer.curr_pos, 5);
-        lexer.get_next_token();
+        lexer.get_next_token().unwrap();
         assert_eq!(lexer.curr_tok.token_type, TokType::Plus);
         assert_eq!(lexer.curr_pos, 7);
-        lexer.get_next_token();
+        lexer.get_next_token().unwrap();
         assert_eq!(lexer.curr_tok.token_type, TokType::Xvar);
         assert_eq!(lexer.curr_pos, 9);
-        lexer.get_next_token();
+        lexer.get_next_token().unwrap();
         assert_eq!(lexer.curr_tok.token_type, TokType::Newl);
         assert_eq!(lexer.curr_pos, 10);
     }
@@ -219,7 +217,7 @@ mod tests {
         let string = String::from("2.3\n");
         let mut lexer = Lexer::lexer_init(string);
 
-        lexer.get_next_token();
+        lexer.get_next_token().unwrap();
         let token = lexer.curr_tok;
         assert_eq!(token.token_type, TokType::Number);
         assert_eq!(token.token_content, String::from("2.3"));

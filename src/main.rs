@@ -28,10 +28,17 @@ fn main() {
     // };
     // tokenize(lexer)
 
-    let polynomial = Polynomial::from("2xyz + yzx + zxy + xy").unwrap();
-    println!("{:?}", polynomial);
-    println!("{}", polynomial.expr());
+    // let polynomial = Polynomial::from("2xyz + yzx + zxy + xy").unwrap();
+    // println!("{:?}", polynomial);
+    // println!("{}", polynomial.expr());
 
-    let monomial = Monomial::from("2xyz").unwrap();
-    println!("{}", monomial.expr())
+    // let monomial = Monomial::from("2xyz").unwrap();
+    // println!("{}", monomial.expr())
+
+    let mut parser = Parser::parser_init(String::from("(((x + y) * (x + y))) * (x + y)"));
+    let polynomial = parser.start_parser();
+    match polynomial {
+        Ok(v) => println!("{}", v.expr()),
+        Err(e) => println!("{}", e),
+    }
 }

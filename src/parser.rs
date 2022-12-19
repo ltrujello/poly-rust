@@ -10,7 +10,9 @@ pub struct Parser {
 impl Parser {
     pub fn parser_init(current_line: String) -> Self {
         let lexer = Lexer::lexer_init(current_line);
-        let mut parser = Parser { lexer: lexer };
+        let mut parser = Parser {
+            lexer: lexer,
+        };
         parser.lexer.get_next_token().unwrap();
         parser
     }
@@ -87,6 +89,61 @@ impl Parser {
             coefficient,
             power_list,
         })
+    }
+
+    pub fn parse_factor_expr(&mut self) -> Result<Polynomial, String> {
+        let polynomial: Result<Polynomial, String>;
+        match self.lexer.curr_tok.token_type {
+            TokType::Lpar => {
+                self.lexer.get_next_token().unwrap();
+                polynomial = self.parse_poly_expr();
+
+                if self.lexer.curr_tok.token_type == TokType::Rpar {
+                    self.lexer.get_next_token().unwrap();
+                } else {
+                    info!("Hmm we parsed a polynomial expr but did not find an rpar");
+                }
+            }
+            TokType::Minus => {
+                self.lexer.get_next_token().unwrap();
+                if self.lexer.curr_tok.token_type == TokType::Lpar {
+                    polynomial = self.parse_factor_expr();
+                } else {
+                    polynomial = self.parse_polynomial();
+                }
+            }
+            _ => {
+                polynomial = self.parse_polynomial();
+            }
+        }
+
+        polynomial
+    }
+
+    pub fn parse_term_expr(&mut self) -> Result<Polynomial, String> {
+        let polynomial = self.parse_factor_expr()?;
+        match self.lexer.curr_tok.token_type {
+            TokType::Mul => {
+                self.lexer.get_next_token().unwrap();
+                let other = self.parse_factor_expr()?;
+                return Ok(polynomial * other);
+            }
+            _ => {
+                return Ok(polynomial);
+            }
+        }
+    }
+
+    pub fn parse_poly_expr(&mut self) -> Result<Polynomial, String> {
+        let polynomial = self.parse_term_expr();
+
+        polynomial
+    }
+
+    pub fn start_parser(&mut self) -> Result<Polynomial, String> {
+        let polynomial = self.parse_poly_expr();
+
+        polynomial
     }
 }
 
@@ -180,4 +237,50 @@ mod tests {
         assert_eq!(polynomial.monomials.len(), 1);
         assert_eq!(polynomial.monomials[0].coefficient, 9.5);
     }
+
+    #[rstest]
+    fn parse_polynomial_expr_mulitplication_a() {
+        let mut parser = Parser::parser_init(String::from("(x + y) * (x + y)"));
+        let polynomial = parser.start_parser();
+        match polynomial {
+            Ok(v) => assert_eq!(v.expr(), "y^2 + 2xy + x^2"),
+            Err(e) => assert!(false, "{}", e),
+        }
+    }
+
+    #[rstest]
+    fn parse_polynomial_expr_mulitplication_b() {
+        let mut parser = Parser::parser_init(String::from("(((x + y) * (x + y))) * (x + y)"));
+        let polynomial = parser.start_parser();
+        match polynomial {
+            Ok(v) => assert_eq!(v.expr(), "y^3 + 3xy^2 + 3x^2y + x^3"),
+            Err(e) => assert!(false, "{}", e),
+        }
+    }
+
+    #[rstest]
+    fn parse_polynomial_expr_mulitplication_c() {
+        let mut parser = Parser::parser_init(String::from("(x^4 + 1) * ((x^3 + 2x) * (x + 1))"));
+        let polynomial = parser.start_parser();
+        match polynomial {
+            Ok(v) => assert_eq!(v.expr(), "2x + 2x^2 + x^3 + x^4 + 2x^5 + 2x^6 + x^7 + x^8"),
+            Err(e) => assert!(false, "{}", e),
+        }
+    }
+    #[rstest]
+    fn parse_polynomial_expr_parentheses() {
+        let mut parser = Parser::parser_init(String::from("(((x + y)))"));
+        let polynomial = parser.start_parser();
+        match polynomial {
+            Ok(v) => assert_eq!(v.expr(), "y + x"),
+            Err(e) => assert!(false, "{}", e),
+        }
+    }
+
+    // Valid expressions
+    // (x^4 + 1) * ((x^3 + 2x) * (x + 1))
+    // (x^4 + 1) * (x^3)
+    // ((x^4 + 1))
+    // x^3 * x + x^4 + x^2
+    // x * (x - 8)^2 * (x - 9)
 }
