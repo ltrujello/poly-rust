@@ -1,4 +1,4 @@
-use crate::parser::Parser;
+use crate::parser::{Parser, ParserErr};
 use std::clone::Clone;
 use std::cmp::Ordering;
 use std::fmt;
@@ -89,7 +89,7 @@ impl Monomial {
         self.power_list.iter().sum()
     }
 
-    pub fn from(expr: &str) -> Result<Monomial, String> {
+    pub fn from(expr: &str) -> Result<Monomial, ParserErr> {
         let mut parser = Parser::parser_init(String::from(expr));
         let monomial = parser.parse_monomial()?;
         Ok(monomial)

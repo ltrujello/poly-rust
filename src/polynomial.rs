@@ -1,4 +1,4 @@
-use crate::parser::Parser;
+use crate::parser::{Parser, ParserErr};
 use std::clone::Clone;
 use std::cmp::Ordering;
 use std::ops;
@@ -77,7 +77,7 @@ impl Polynomial {
         println!("{}", self.expr());
     }
 
-    pub fn from(expr: &str) -> Result<Polynomial, String> {
+    pub fn from(expr: &str) -> Result<Polynomial, ParserErr> {
         let mut parser = Parser::parser_init(String::from(expr));
         let polynomial = parser.parse_polynomial()?;
         Ok(polynomial)

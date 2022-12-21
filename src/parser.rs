@@ -7,17 +7,21 @@ pub struct Parser {
     lexer: Lexer,
 }
 
+#[derive(Debug)]
+pub enum ParserErr {
+    ExpectedToken,
+    UnexpectedToken,
+}
+
 impl Parser {
     pub fn parser_init(current_line: String) -> Self {
         let lexer = Lexer::lexer_init(current_line);
-        let mut parser = Parser {
-            lexer: lexer,
-        };
+        let mut parser = Parser { lexer: lexer };
         parser.lexer.get_next_token().unwrap();
         parser
     }
 
-    pub fn parse_polynomial(&mut self) -> Result<Polynomial, String> {
+    pub fn parse_polynomial(&mut self) -> Result<Polynomial, ParserErr> {
         let now = Instant::now();
         let mut polynomial = Polynomial::new();
         loop {
@@ -36,7 +40,7 @@ impl Parser {
         Ok(polynomial)
     }
 
-    pub fn parse_monomial(&mut self) -> Result<Monomial, String> {
+    pub fn parse_monomial(&mut self) -> Result<Monomial, ParserErr> {
         let now = Instant::now();
         let mut coefficient = 1.0;
         if self.lexer.curr_tok.token_type == TokType::Number {
@@ -59,7 +63,7 @@ impl Parser {
                             "Received unknown token content {}",
                             self.lexer.curr_tok.token_content
                         );
-                        return Err(String::from("Received unknown token content"));
+                        return Err(ParserErr::UnexpectedToken);
                     }
                 }
                 self.lexer.get_next_token().unwrap();
@@ -69,7 +73,8 @@ impl Parser {
                     self.lexer.get_next_token().unwrap();
                     // get number
                     if self.lexer.curr_tok.token_type != TokType::Number {
-                        return Err(String::from("Expected TokType::Number after ^"));
+                        error!("Expected TokType::Number after ^");
+                        return Err(ParserErr::ExpectedToken);
                     }
                     exponent = self.lexer.curr_tok.token_content.parse::<i32>().unwrap();
                     self.lexer.get_next_token().unwrap();
@@ -91,8 +96,8 @@ impl Parser {
         })
     }
 
-    pub fn parse_factor_expr(&mut self) -> Result<Polynomial, String> {
-        let polynomial: Result<Polynomial, String>;
+    pub fn parse_factor_expr(&mut self) -> Result<Polynomial, ParserErr> {
+        let polynomial: Result<Polynomial, ParserErr>;
         match self.lexer.curr_tok.token_type {
             TokType::Lpar => {
                 self.lexer.get_next_token().unwrap();
@@ -101,7 +106,8 @@ impl Parser {
                 if self.lexer.curr_tok.token_type == TokType::Rpar {
                     self.lexer.get_next_token().unwrap();
                 } else {
-                    info!("Hmm we parsed a polynomial expr but did not find an rpar");
+                    error!("Expected closing parenthesis at end of expression");
+                    return Err(ParserErr::ExpectedToken);
                 }
             }
             TokType::Minus => {
@@ -120,7 +126,7 @@ impl Parser {
         polynomial
     }
 
-    pub fn parse_term_expr(&mut self) -> Result<Polynomial, String> {
+    pub fn parse_term_expr(&mut self) -> Result<Polynomial, ParserErr> {
         let polynomial = self.parse_factor_expr()?;
         match self.lexer.curr_tok.token_type {
             TokType::Mul => {
@@ -134,13 +140,13 @@ impl Parser {
         }
     }
 
-    pub fn parse_poly_expr(&mut self) -> Result<Polynomial, String> {
+    pub fn parse_poly_expr(&mut self) -> Result<Polynomial, ParserErr> {
         let polynomial = self.parse_term_expr();
 
         polynomial
     }
 
-    pub fn start_parser(&mut self) -> Result<Polynomial, String> {
+    pub fn start_parser(&mut self) -> Result<Polynomial, ParserErr> {
         let polynomial = self.parse_poly_expr();
 
         polynomial
@@ -244,7 +250,7 @@ mod tests {
         let polynomial = parser.start_parser();
         match polynomial {
             Ok(v) => assert_eq!(v.expr(), "y^2 + 2xy + x^2"),
-            Err(e) => assert!(false, "{}", e),
+            Err(e) => assert!(false, "{:?}", e),
         }
     }
 
@@ -254,7 +260,7 @@ mod tests {
         let polynomial = parser.start_parser();
         match polynomial {
             Ok(v) => assert_eq!(v.expr(), "y^3 + 3xy^2 + 3x^2y + x^3"),
-            Err(e) => assert!(false, "{}", e),
+            Err(e) => assert!(false, "{:?}", e),
         }
     }
 
@@ -264,7 +270,7 @@ mod tests {
         let polynomial = parser.start_parser();
         match polynomial {
             Ok(v) => assert_eq!(v.expr(), "2x + 2x^2 + x^3 + x^4 + 2x^5 + 2x^6 + x^7 + x^8"),
-            Err(e) => assert!(false, "{}", e),
+            Err(e) => assert!(false, "{:?}", e),
         }
     }
     #[rstest]
@@ -273,7 +279,7 @@ mod tests {
         let polynomial = parser.start_parser();
         match polynomial {
             Ok(v) => assert_eq!(v.expr(), "y + x"),
-            Err(e) => assert!(false, "{}", e),
+            Err(e) => assert!(false, "{:?}", e),
         }
     }
 

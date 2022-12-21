@@ -68,7 +68,7 @@ impl Lexer {
         }
         if self.curr_pos == self.line_size {
             debug!("Reached the end of input");
-            return Ok(' ');
+            return Ok('\n');
         }
         Ok(self.current_line[self.curr_pos])
     }
