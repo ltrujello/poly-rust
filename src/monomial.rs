@@ -12,8 +12,8 @@ pub struct Monomial {
 
 impl Monomial {
     pub fn cmp_terms(&self, other: &Self) -> Ordering {
-        let degree_a: i32 = self.get_degree();
-        let degree_b: i32 = other.get_degree();
+        let degree_a: i32 = self.degree();
+        let degree_b: i32 = other.degree();
 
         if degree_a < degree_b {
             return Ordering::Less;
@@ -25,8 +25,8 @@ impl Monomial {
 
         let max_len = std::cmp::max(self.power_list.len(), other.power_list.len());
         for ind in (0..max_len).rev() {
-            let power_a = self.get_power(ind);
-            let power_b = other.get_power(ind);
+            let power_a = self.power(ind);
+            let power_b = other.power(ind);
 
             if power_a < power_b {
                 return Ordering::Greater;
@@ -58,6 +58,7 @@ impl Monomial {
                     output.push_str(&format!("x^{power}"));
                 }
             }
+
             if ind == 1 && power > 0 {
                 if power == 1 {
                     output.push_str(&format!("y"));
@@ -65,6 +66,7 @@ impl Monomial {
                     output.push_str(&format!("y^{power}"));
                 }
             }
+
             if ind == 2 && power > 0 {
                 if power == 1 {
                     output.push_str(&format!("z"));
@@ -76,7 +78,7 @@ impl Monomial {
         output
     }
 
-    pub fn get_power(&self, ind: usize) -> i32 {
+    pub fn power(&self, ind: usize) -> i32 {
         let power: i32;
         match self.power_list.get(ind) {
             Some(res) => power = *res,
@@ -85,7 +87,7 @@ impl Monomial {
         power
     }
 
-    pub fn get_degree(&self) -> i32 {
+    pub fn degree(&self) -> i32 {
         self.power_list.iter().sum()
     }
 
@@ -162,8 +164,8 @@ impl ops::Mul for Monomial {
             let max_len = std::cmp::max(self.power_list.len(), other.power_list.len());
             power_list = vec![0; max_len];
             for ind in 0..max_len {
-                let power_a = self.get_power(ind);
-                let power_b = other.get_power(ind);
+                let power_a = self.power(ind);
+                let power_b = other.power(ind);
 
                 power_list[ind] = power_a + power_b;
             }
@@ -339,6 +341,34 @@ mod tests {
     }
 
     #[rstest]
+    fn test_ordering_i() {
+        // x > y
+        let monomial_a = Monomial {
+            coefficient: 1.0,
+            power_list: vec![1, 0],
+        };
+        let monomial_b = Monomial {
+            coefficient: 1.0,
+            power_list: vec![0, 1],
+        };
+        assert!(monomial_a > monomial_b);
+    }
+
+    #[rstest]
+    fn test_ordering_j() {
+        // y > z
+        let monomial_a = Monomial {
+            coefficient: 1.0,
+            power_list: vec![0, 1],
+        };
+        let monomial_b = Monomial {
+            coefficient: 1.0,
+            power_list: vec![0, 0, 1],
+        };
+        assert!(monomial_a > monomial_b);
+    }
+
+    #[rstest]
     fn test_mul_a() {
         let monomial_a = Monomial {
             coefficient: 5.0,
@@ -388,10 +418,10 @@ mod tests {
         let monomial = Monomial::from("xyz").unwrap();
 
         assert_eq!(monomial.coefficient, 1.0);
-        assert_eq!(monomial.get_power(0), 1);
-        assert_eq!(monomial.get_power(1), 1);
-        assert_eq!(monomial.get_power(2), 1);
-        assert_eq!(monomial.get_degree(), 3);
+        assert_eq!(monomial.power(0), 1);
+        assert_eq!(monomial.power(1), 1);
+        assert_eq!(monomial.power(2), 1);
+        assert_eq!(monomial.degree(), 3);
     }
 
     #[rstest]
@@ -399,9 +429,9 @@ mod tests {
         let monomial = Monomial::from("3.5x^2yz^5").unwrap();
 
         assert_eq!(monomial.coefficient, 3.5);
-        assert_eq!(monomial.get_degree(), 8);
-        assert_eq!(monomial.get_power(0), 2);
-        assert_eq!(monomial.get_power(1), 1);
-        assert_eq!(monomial.get_power(2), 5);
+        assert_eq!(monomial.degree(), 8);
+        assert_eq!(monomial.power(0), 2);
+        assert_eq!(monomial.power(1), 1);
+        assert_eq!(monomial.power(2), 5);
     }
 }

@@ -38,14 +38,14 @@ impl Polynomial {
         }
         // print coefficient
         if coeff == 1.0 {
-            if first_term.get_degree() == 0 {
+            if first_term.degree() == 0 {
                 output.push_str(&format!("{coeff}"));
             }
         } else {
             output.push_str(&format!("{coeff}"));
         }
         // print term expr
-        if first_term.get_degree() != 0 {
+        if first_term.degree() != 0 {
             output.push_str(&format!("{term_expr}"));
         }
 
@@ -60,13 +60,13 @@ impl Polynomial {
             let coeff = monomial.coefficient.abs();
             let term_expr = monomial.term_expr();
             if coeff == 1.0 {
-                if monomial.get_degree() == 0 {
+                if monomial.degree() == 0 {
                     output.push_str(&format!("{coeff}"));
                 }
             } else {
                 output.push_str(&format!("{coeff}"));
             }
-            if monomial.get_degree() != 0 {
+            if monomial.degree() != 0 {
                 output.push_str(&format!("{term_expr}"));
             }
         }

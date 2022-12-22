@@ -34,7 +34,7 @@ pub struct Lexer {
 }
 
 #[derive(Debug)]
-pub enum LexerError {
+pub enum LexerErr {
     InvalidCharPos,
     UnexpectedChar,
     UnknownChar,
@@ -54,15 +54,15 @@ impl Lexer {
         }
     }
 
-    pub fn get_curr_char(&self) -> Result<char, LexerError> {
+    pub fn get_curr_char(&self) -> Result<char, LexerErr> {
         if self.curr_pos > self.line_size {
             error!("Invalid value for curr_pos {}", self.curr_pos);
-            return Err(LexerError::InvalidCharPos);
+            return Err(LexerErr::InvalidCharPos);
         }
         Ok(self.current_line[self.curr_pos])
     }
 
-    pub fn march_pos(&mut self) -> Result<char, LexerError> {
+    pub fn march_pos(&mut self) -> Result<char, LexerErr> {
         if self.curr_pos < self.line_size {
             self.curr_pos += 1;
         }
@@ -73,17 +73,17 @@ impl Lexer {
         Ok(self.current_line[self.curr_pos])
     }
 
-    pub fn unmarch_pos(&mut self) -> Result<char, LexerError> {
+    pub fn unmarch_pos(&mut self) -> Result<char, LexerErr> {
         if self.curr_pos > 0 {
             self.curr_pos -= 1;
         } else {
             error!("Invalid attempt to move before the first character of input");
-            return Err(LexerError::InvalidCharPos);
+            return Err(LexerErr::InvalidCharPos);
         }
         Ok(self.current_line[self.curr_pos])
     }
 
-    pub fn get_next_token(&mut self) -> Result<(), LexerError> {
+    pub fn get_next_token(&mut self) -> Result<(), LexerErr> {
         if self.curr_pos == self.line_size {
             self.curr_tok.token_type = TokType::End;
             debug!("No more input, returning tok {:?}", TokType::End);
@@ -141,7 +141,7 @@ impl Lexer {
             '.' => self.curr_tok.token_type = TokType::Period,
             _ => {
                 error!("Unknown character: {} ", ch);
-                return Err(LexerError::UnknownChar);
+                return Err(LexerErr::UnknownChar);
             }
         }
         debug!(
@@ -154,7 +154,7 @@ impl Lexer {
     }
 }
 
-pub fn tokenize(mut lexer: Lexer) -> Result<(), LexerError> {
+pub fn tokenize(mut lexer: Lexer) -> Result<(), LexerErr> {
     let mut ind = 0;
     lexer.get_next_token()?;
     loop {

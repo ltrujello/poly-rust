@@ -147,7 +147,11 @@ impl Parser {
     }
 
     pub fn start_parser(&mut self) -> Result<Polynomial, ParserErr> {
+        let now = Instant::now();
         let polynomial = self.parse_poly_expr();
+
+        let elapsed = now.elapsed();
+        info!("Parsed {:?} in {:.5?}", self.lexer.current_line, elapsed);
 
         polynomial
     }
@@ -164,22 +168,22 @@ mod tests {
         let mut monomial = parser.parse_monomial().unwrap();
 
         assert_eq!(monomial.coefficient, 1.0);
-        assert_eq!(monomial.get_power(0), 1);
-        assert_eq!(monomial.get_degree(), 1);
+        assert_eq!(monomial.power(0), 1);
+        assert_eq!(monomial.degree(), 1);
 
         parser = Parser::parser_init(String::from("y\n"));
         monomial = parser.parse_monomial().unwrap();
 
         assert_eq!(monomial.coefficient, 1.0);
-        assert_eq!(monomial.get_power(1), 1);
-        assert_eq!(monomial.get_degree(), 1);
+        assert_eq!(monomial.power(1), 1);
+        assert_eq!(monomial.degree(), 1);
 
         parser = Parser::parser_init(String::from("z\n"));
         monomial = parser.parse_monomial().unwrap();
 
         assert_eq!(monomial.coefficient, 1.0);
-        assert_eq!(monomial.get_power(2), 1);
-        assert_eq!(monomial.get_degree(), 1);
+        assert_eq!(monomial.power(2), 1);
+        assert_eq!(monomial.degree(), 1);
     }
 
     #[rstest]
@@ -187,10 +191,10 @@ mod tests {
         let mut parser = Parser::parser_init(String::from("xyz\n"));
         let monomial = parser.parse_monomial().unwrap();
         assert_eq!(monomial.coefficient, 1.0);
-        assert_eq!(monomial.get_power(0), 1);
-        assert_eq!(monomial.get_power(1), 1);
-        assert_eq!(monomial.get_power(2), 1);
-        assert_eq!(monomial.get_degree(), 3);
+        assert_eq!(monomial.power(0), 1);
+        assert_eq!(monomial.power(1), 1);
+        assert_eq!(monomial.power(2), 1);
+        assert_eq!(monomial.degree(), 3);
     }
 
     #[rstest]
@@ -199,10 +203,10 @@ mod tests {
         let monomial = parser.parse_monomial().unwrap();
 
         assert_eq!(monomial.coefficient, 3.5);
-        assert_eq!(monomial.get_degree(), 8);
-        assert_eq!(monomial.get_power(0), 2);
-        assert_eq!(monomial.get_power(1), 1);
-        assert_eq!(monomial.get_power(2), 5);
+        assert_eq!(monomial.degree(), 8);
+        assert_eq!(monomial.power(0), 2);
+        assert_eq!(monomial.power(1), 1);
+        assert_eq!(monomial.power(2), 5);
     }
 
     #[rstest]
@@ -273,6 +277,19 @@ mod tests {
             Err(e) => assert!(false, "{:?}", e),
         }
     }
+
+    #[rstest]
+    fn parse_polynomial_expr_mulitplication_d() {
+        let mut parser = Parser::parser_init(String::from(
+            "(((x + y + z)*(x + y + z))*(x + y + z))*(x + y + z)",
+        ));
+        let polynomial = parser.start_parser();
+        match polynomial {
+            Ok(v) => assert_eq!(v.expr(), "z^4 + 4yz^3 + 4xz^3 + 6y^2z^2 + 12xyz^2 + 6x^2z^2 + 4y^3z + 12xy^2z + 12x^2yz + 4x^3z + y^4 + 4xy^3 + 6x^2y^2 + 4x^3y + x^4"),
+            Err(e) => assert!(false, "{:?}", e),
+        }
+    }
+
     #[rstest]
     fn parse_polynomial_expr_parentheses() {
         let mut parser = Parser::parser_init(String::from("(((x + y)))"));
