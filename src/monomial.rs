@@ -24,7 +24,7 @@ impl Monomial {
         }
 
         let max_len = std::cmp::max(self.power_list.len(), other.power_list.len());
-        for ind in (0..max_len).rev() {
+        for ind in 0..max_len {
             let power_a = self.power(ind);
             let power_b = other.power(ind);
 
@@ -244,28 +244,28 @@ mod tests {
 
     #[rstest]
     fn test_ordering_b() {
-        // x^2 > xy
+        // xy > x^2
         let monomial_a = Monomial {
             coefficient: 1.0,
-            power_list: vec![2, 0, 0],
+            power_list: vec![1, 1, 0],
         };
         let monomial_b = Monomial {
             coefficient: 1.0,
-            power_list: vec![1, 1, 0],
+            power_list: vec![2, 0, 0],
         };
         assert!(monomial_a > monomial_b);
     }
 
     #[rstest]
     fn test_ordering_c() {
-        // xy > y^2
+        // y^2 > xy
         let monomial_a = Monomial {
             coefficient: 1.0,
-            power_list: vec![1, 1, 0],
+            power_list: vec![0, 2, 0],
         };
         let monomial_b = Monomial {
             coefficient: 1.0,
-            power_list: vec![0, 2, 0],
+            power_list: vec![1, 1, 0],
         };
         assert!(monomial_a > monomial_b);
     }
@@ -286,66 +286,80 @@ mod tests {
 
     #[rstest]
     fn test_ordering_e() {
-        // xz > yz
+        // yz > xz
         let monomial_a = Monomial {
             coefficient: 1.0,
-            power_list: vec![1, 0, 1],
+            power_list: vec![0, 1, 1],
         };
         let monomial_b = Monomial {
             coefficient: 1.0,
-            power_list: vec![0, 1, 1],
+            power_list: vec![1, 0, 1],
         };
         assert!(monomial_a > monomial_b);
     }
 
     #[rstest]
     fn test_ordering_f() {
-        // yz > z^2
+        // z^2 > yz 
         let monomial_a = Monomial {
             coefficient: 1.0,
-            power_list: vec![0, 1, 1],
+            power_list: vec![0, 0, 2],
         };
         let monomial_b = Monomial {
             coefficient: 1.0,
-            power_list: vec![0, 0, 2],
+            power_list: vec![0, 1, 1],
         };
         assert!(monomial_a > monomial_b);
     }
 
     #[rstest]
     fn test_ordering_g() {
-        // x^5y > x^2yz^3
+        // x^2yz^3 > x^5y
         let monomial_a = Monomial {
             coefficient: 1.0,
-            power_list: vec![5, 1],
+            power_list: vec![2, 1, 3],
         };
         let monomial_b = Monomial {
             coefficient: 1.0,
-            power_list: vec![2, 1, 3],
+            power_list: vec![5, 1],
         };
         assert!(monomial_a > monomial_b);
     }
 
     #[rstest]
     fn test_ordering_h() {
-        // x^3 > x^2y
+        // x^2y > x^3
         let monomial_a = Monomial {
             coefficient: 1.0,
-            power_list: vec![3],
+            power_list: vec![2, 1],
         };
         let monomial_b = Monomial {
             coefficient: 1.0,
-            power_list: vec![2, 1],
+            power_list: vec![3],
         };
         assert!(monomial_a > monomial_b);
     }
 
     #[rstest]
     fn test_ordering_i() {
-        // x > y
+        // y > x
         let monomial_a = Monomial {
             coefficient: 1.0,
-            power_list: vec![1, 0],
+            power_list: vec![0, 1],
+        };
+        let monomial_b = Monomial {
+            coefficient: 1.0,
+            power_list: vec![1],
+        };
+        assert!(monomial_a > monomial_b);
+    }
+
+    #[rstest]
+    fn test_ordering_j() {
+        // z > y
+        let monomial_a = Monomial {
+            coefficient: 1.0,
+            power_list: vec![0, 0, 1],
         };
         let monomial_b = Monomial {
             coefficient: 1.0,
@@ -355,15 +369,29 @@ mod tests {
     }
 
     #[rstest]
-    fn test_ordering_j() {
-        // y > z
+    fn test_ordering_k() {
+        // z^2 > y^2
         let monomial_a = Monomial {
             coefficient: 1.0,
-            power_list: vec![0, 1],
+            power_list: vec![0, 0, 2],
         };
         let monomial_b = Monomial {
             coefficient: 1.0,
+            power_list: vec![0, 2],
+        };
+        assert!(monomial_a > monomial_b);
+    }
+
+    #[rstest]
+    fn test_ordering_l() {
+        // z > x
+        let monomial_a = Monomial {
+            coefficient: 1.0,
             power_list: vec![0, 0, 1],
+        };
+        let monomial_b = Monomial {
+            coefficient: 1.0,
+            power_list: vec![1],
         };
         assert!(monomial_a > monomial_b);
     }

@@ -244,15 +244,15 @@ mod tests {
         assert_eq!(
             polynomial.monomials[0],
             Monomial {
-                coefficient: 42.0,
-                power_list: vec![0, 4, 0],
+                coefficient: 35.0,
+                power_list: vec![2, 2, 0],
             }
         );
         assert_eq!(
             polynomial.monomials[1],
             Monomial {
-                coefficient: 35.0,
-                power_list: vec![2, 2, 0],
+                coefficient: 42.0,
+                power_list: vec![0, 4, 0],
             }
         );
     }
@@ -267,9 +267,9 @@ mod tests {
     fn test_polynomial_from_str_a() {
         let polynomial = Polynomial::from("2x + y + z + 2x + y + y + y + z").unwrap();
         assert_eq!(polynomial.monomials.len(), 3);
-        assert_eq!(polynomial.monomials[0].expr().as_str(), "2z");
+        assert_eq!(polynomial.monomials[0].expr().as_str(), "4x");
         assert_eq!(polynomial.monomials[1].expr().as_str(), "4y");
-        assert_eq!(polynomial.monomials[2].expr().as_str(), "4x");
+        assert_eq!(polynomial.monomials[2].expr().as_str(), "2z");
     }
 
     #[rstest]

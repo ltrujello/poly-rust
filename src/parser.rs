@@ -253,7 +253,7 @@ mod tests {
         let mut parser = Parser::parser_init(String::from("(x + y) * (x + y)"));
         let polynomial = parser.start_parser();
         match polynomial {
-            Ok(v) => assert_eq!(v.expr(), "y^2 + 2xy + x^2"),
+            Ok(v) => assert_eq!(v.expr(), "x^2 + 2xy + y^2"),
             Err(e) => assert!(false, "{:?}", e),
         }
     }
@@ -263,7 +263,7 @@ mod tests {
         let mut parser = Parser::parser_init(String::from("(((x + y) * (x + y))) * (x + y)"));
         let polynomial = parser.start_parser();
         match polynomial {
-            Ok(v) => assert_eq!(v.expr(), "y^3 + 3xy^2 + 3x^2y + x^3"),
+            Ok(v) => assert_eq!(v.expr(), "x^3 + 3x^2y + 3xy^2 + y^3"),
             Err(e) => assert!(false, "{:?}", e),
         }
     }
@@ -285,7 +285,7 @@ mod tests {
         ));
         let polynomial = parser.start_parser();
         match polynomial {
-            Ok(v) => assert_eq!(v.expr(), "z^4 + 4yz^3 + 4xz^3 + 6y^2z^2 + 12xyz^2 + 6x^2z^2 + 4y^3z + 12xy^2z + 12x^2yz + 4x^3z + y^4 + 4xy^3 + 6x^2y^2 + 4x^3y + x^4"),
+            Ok(v) => assert_eq!(v.expr(), "x^4 + 4x^3y + 4x^3z + 6x^2y^2 + 12x^2yz + 6x^2z^2 + 4xy^3 + 12xy^2z + 12xyz^2 + 4xz^3 + y^4 + 4y^3z + 6y^2z^2 + 4yz^3 + z^4"),
             Err(e) => assert!(false, "{:?}", e),
         }
     }
@@ -295,7 +295,7 @@ mod tests {
         let mut parser = Parser::parser_init(String::from("(((x + y)))"));
         let polynomial = parser.start_parser();
         match polynomial {
-            Ok(v) => assert_eq!(v.expr(), "y + x"),
+            Ok(v) => assert_eq!(v.expr(), "x + y"),
             Err(e) => assert!(false, "{:?}", e),
         }
     }
