@@ -21,25 +21,6 @@ impl Parser {
         parser
     }
 
-    pub fn parse_polynomial(&mut self) -> Result<Polynomial, ParserErr> {
-        let now = Instant::now();
-        let mut polynomial = Polynomial::new();
-        loop {
-            match self.lexer.curr_tok.token_type {
-                TokType::Number | TokType::Xvar => {
-                    let monomial_res = self.parse_monomial()?;
-                    polynomial += monomial_res;
-                }
-                TokType::Plus | TokType::Minus => self.lexer.get_next_token().unwrap(),
-                _ => break,
-            }
-        }
-        let elapsed = now.elapsed();
-        info!("Parsed {:?} in {:.5?}", self.lexer.current_line, elapsed);
-
-        Ok(polynomial)
-    }
-
     pub fn parse_monomial(&mut self) -> Result<Monomial, ParserErr> {
         let now = Instant::now();
         let mut coefficient = 1.0;
@@ -47,6 +28,12 @@ impl Parser {
             coefficient = self.lexer.curr_tok.token_content.parse::<f64>().unwrap();
             self.lexer.get_next_token().unwrap();
         }
+        // get minus symbol
+        if self.lexer.curr_tok.token_type == TokType::Minus {
+            coefficient *= -1.0;
+            self.lexer.get_next_token().unwrap();
+        }
+
         let mut power_list = vec![0; 3];
         loop {
             let prev_position = self.lexer.curr_pos;
@@ -94,6 +81,25 @@ impl Parser {
             coefficient,
             power_list,
         })
+    }
+
+    pub fn parse_polynomial(&mut self) -> Result<Polynomial, ParserErr> {
+        let now = Instant::now();
+        let mut polynomial = Polynomial::new();
+        loop {
+            match self.lexer.curr_tok.token_type {
+                TokType::Minus | TokType::Number | TokType::Xvar => {
+                    let monomial_res = self.parse_monomial()?;
+                    polynomial += monomial_res;
+                }
+                TokType::Plus => self.lexer.get_next_token().unwrap(),
+                _ => break,
+            }
+        }
+        let elapsed = now.elapsed();
+        debug!("Parsed {:?} in {:.5?}", self.lexer.current_line, elapsed);
+
+        Ok(polynomial)
     }
 
     pub fn parse_factor_expr(&mut self) -> Result<Polynomial, ParserErr> {
