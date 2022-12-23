@@ -300,7 +300,7 @@ mod tests {
 
     #[rstest]
     fn test_ordering_f() {
-        // z^2 > yz 
+        // z^2 > yz
         let monomial_a = Monomial {
             coefficient: 1.0,
             power_list: vec![0, 0, 2],

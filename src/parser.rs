@@ -297,6 +297,26 @@ mod tests {
     }
 
     #[rstest]
+    fn parse_polynomial_expr_mulitplication_negative_a() {
+        let mut parser = Parser::parser_init(String::from("((x - y) * (x + y)) * (x + y)"));
+        let polynomial = parser.start_parser();
+        match polynomial {
+            Ok(v) => assert_eq!(v.expr(), "x^3 + x^2y - xy^2 - y^3"),
+            Err(e) => assert!(false, "{:?}", e),
+        }
+    }
+
+    #[rstest]
+    fn parse_polynomial_expr_mulitplication_negative_b() {
+        let mut parser = Parser::parser_init(String::from("(((x - y) * (x + y)) * (x + y)) * (x + y)"));
+        let polynomial = parser.start_parser();
+        match polynomial {
+            Ok(v) => assert_eq!(v.expr(), "x^4 + 2x^3y - 2xy^3 - y^4"),
+            Err(e) => assert!(false, "{:?}", e),
+        }
+    }
+
+    #[rstest]
     fn parse_polynomial_expr_parentheses() {
         let mut parser = Parser::parser_init(String::from("(((x + y)))"));
         let polynomial = parser.start_parser();

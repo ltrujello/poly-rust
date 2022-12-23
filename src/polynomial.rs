@@ -26,48 +26,53 @@ impl Polynomial {
 
     pub fn expr(&self) -> String {
         let mut output = String::from("");
-        if self.monomials.len() < 1 {
-            return output;
-        }
-        // first term of a polynomial is printed differently
-        let first_term = &self.monomials[0];
-        let coeff = first_term.coefficient.abs();
-        let term_expr = first_term.term_expr();
-        if first_term.coefficient < 0.0 {
-            output.push_str("-");
-        }
-        // print coefficient
-        if coeff == 1.0 {
-            if first_term.degree() == 0 {
-                output.push_str(&format!("{coeff}"));
-            }
-        } else {
-            output.push_str(&format!("{coeff}"));
-        }
-        // print term expr
-        if first_term.degree() != 0 {
-            output.push_str(&format!("{term_expr}"));
-        }
+        let mut first_term_printed: bool = false;
 
-        // print the remainder of the terms
-        for ind in 1..self.monomials.len() {
+        for ind in 0..self.monomials.len() {
             let monomial = &self.monomials[ind];
-            if monomial.coefficient < 0.0 {
-                output.push_str(" - ");
-            } else {
-                output.push_str(" + ");
+            // skip nonzero terms
+            if monomial.coefficient == 0.0 {
+                continue;
             }
-            let coeff = monomial.coefficient.abs();
-            let term_expr = monomial.term_expr();
-            if coeff == 1.0 {
-                if monomial.degree() == 0 {
+            // first term of a polynomial is printed differently
+            if first_term_printed == false {
+                let first_term = monomial;
+                let coeff = first_term.coefficient.abs();
+                let term_expr = first_term.term_expr();
+                if first_term.coefficient < 0.0 {
+                    output.push_str("-");
+                }
+                // print coefficient
+                if coeff == 1.0 {
+                    if first_term.degree() == 0 {
+                        output.push_str(&format!("{coeff}"));
+                    }
+                } else {
                     output.push_str(&format!("{coeff}"));
                 }
+                // print term expr
+                if first_term.degree() != 0 {
+                    output.push_str(&format!("{term_expr}"));
+                }
+                first_term_printed = true;
             } else {
-                output.push_str(&format!("{coeff}"));
-            }
-            if monomial.degree() != 0 {
-                output.push_str(&format!("{term_expr}"));
+                if monomial.coefficient < 0.0 {
+                    output.push_str(" - ");
+                } else {
+                    output.push_str(" + ");
+                }
+                let coeff = monomial.coefficient.abs();
+                let term_expr = monomial.term_expr();
+                if coeff == 1.0 {
+                    if monomial.degree() == 0 {
+                        output.push_str(&format!("{coeff}"));
+                    }
+                } else {
+                    output.push_str(&format!("{coeff}"));
+                }
+                if monomial.degree() != 0 {
+                    output.push_str(&format!("{term_expr}"));
+                }
             }
         }
         output
