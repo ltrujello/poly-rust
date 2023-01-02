@@ -23,6 +23,8 @@ impl Parser {
 
     pub fn parse_monomial(&mut self) -> Result<Monomial, ParserErr> {
         let now = Instant::now();
+        let start_ind = self.lexer.curr_pos;
+
         let mut coefficient = 1.0;
         if self.lexer.curr_tok.token_type == TokType::Number {
             coefficient = self.lexer.curr_tok.token_content.parse::<f64>().unwrap();
@@ -76,7 +78,12 @@ impl Parser {
             }
         }
         let elapsed = now.elapsed();
-        debug!("Parsed {:?} in {:.5?}", self.lexer.current_line, elapsed);
+        let end_ind = self.lexer.curr_pos;
+        debug!(
+            "Parsed {:?} in {:.5?}",
+            &self.lexer.current_line[start_ind..end_ind],
+            elapsed
+        );
         Ok(Monomial {
             coefficient,
             power_list,
@@ -88,11 +95,43 @@ impl Parser {
         let mut polynomial = Polynomial::new();
         loop {
             match self.lexer.curr_tok.token_type {
-                TokType::Minus | TokType::Number | TokType::Xvar => {
+                TokType::Minus => {
+                    let next_token = self.lexer.peek_next_token().unwrap();
+                    if next_token.token_type == TokType::Number
+                        || next_token.token_type == TokType::Xvar
+                    {
+                        self.lexer.get_next_token().unwrap();
+                        let monomial_res = self.parse_monomial()?;
+                        polynomial += -1.0 * monomial_res;
+                    } else {
+                        info!(
+                            "XXX token is back to MINUS: {:?}",
+                            self.lexer.curr_tok.token_type
+                        );
+                        break;
+                    }
+                }
+                TokType::Plus => {
+                    info!("Meowmix is great!");
+                    let next_token = self.lexer.peek_next_token().unwrap();
+                    if next_token.token_type == TokType::Number
+                        || next_token.token_type == TokType::Xvar
+                    {
+                        self.lexer.get_next_token().unwrap();
+                        let monomial_res = self.parse_monomial()?;
+                        polynomial += monomial_res;
+                    } else {
+                        info!(
+                            "XXX token is back to PLUS: {:?}",
+                            self.lexer.curr_tok.token_type
+                        );
+                        break;
+                    }
+                }
+                TokType::Number | TokType::Xvar => {
                     let monomial_res = self.parse_monomial()?;
                     polynomial += monomial_res;
                 }
-                TokType::Plus => self.lexer.get_next_token().unwrap(),
                 _ => break,
             }
         }
@@ -103,6 +142,10 @@ impl Parser {
     }
 
     pub fn parse_factor_expr(&mut self) -> Result<Polynomial, ParserErr> {
+        info!(
+            "parse_factor_expr: recieved token {:?}",
+            self.lexer.curr_tok.token_type
+        );
         let polynomial: Result<Polynomial, ParserErr>;
         match self.lexer.curr_tok.token_type {
             TokType::Lpar => {
@@ -133,6 +176,10 @@ impl Parser {
     }
 
     pub fn parse_term_expr(&mut self) -> Result<Polynomial, ParserErr> {
+        info!(
+            "parse_term_expr: recieved token {:?}",
+            self.lexer.curr_tok.token_type
+        );
         let polynomial = self.parse_factor_expr()?;
         match self.lexer.curr_tok.token_type {
             TokType::Mul => {
@@ -147,9 +194,21 @@ impl Parser {
     }
 
     pub fn parse_poly_expr(&mut self) -> Result<Polynomial, ParserErr> {
-        let polynomial = self.parse_term_expr();
-
-        polynomial
+        info!(
+            "parse_poly_expr: recieved token {:?}",
+            self.lexer.curr_tok.token_type
+        );
+        let polynomial = self.parse_term_expr()?;
+        match self.lexer.curr_tok.token_type {
+            TokType::Plus => {
+                self.lexer.get_next_token().unwrap();
+                let other = self.parse_term_expr()?;
+                return Ok(polynomial + other);
+            }
+            _ => {
+                return Ok(polynomial);
+            }
+        }
     }
 
     pub fn start_parser(&mut self) -> Result<Polynomial, ParserErr> {
@@ -308,7 +367,8 @@ mod tests {
 
     #[rstest]
     fn parse_polynomial_expr_mulitplication_negative_b() {
-        let mut parser = Parser::parser_init(String::from("(((x - y) * (x + y)) * (x + y)) * (x + y)"));
+        let mut parser =
+            Parser::parser_init(String::from("(((x - y) * (x + y)) * (x + y)) * (x + y)"));
         let polynomial = parser.start_parser();
         match polynomial {
             Ok(v) => assert_eq!(v.expr(), "x^4 + 2x^3y - 2xy^3 - y^4"),

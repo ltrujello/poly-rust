@@ -1,4 +1,4 @@
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 pub enum TokType {
     Exit,
     Newl,
@@ -20,7 +20,7 @@ pub enum TokType {
     End,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Token {
     pub token_type: TokType,
     pub token_content: String,
@@ -31,6 +31,8 @@ pub struct Lexer {
     pub line_size: usize,
     pub curr_pos: usize,
     pub curr_tok: Token,
+    pub next_pos: usize,
+    pub next_tok: Option<Token>,
 }
 
 #[derive(Debug)]
@@ -51,6 +53,8 @@ impl Lexer {
                 token_type: TokType::End,
                 token_content: String::from(""),
             },
+            next_pos: 0,
+            next_tok: None,
         }
     }
 
@@ -83,7 +87,33 @@ impl Lexer {
         Ok(self.current_line[self.curr_pos])
     }
 
+    pub fn peek_next_token(&mut self) -> Result<Token, LexerErr> {
+        let last_pos = self.curr_pos;
+        let last_tok = self.curr_tok.clone();
+
+        self.get_next_token()?;
+        // set attributes for next token
+        self.next_pos = self.curr_pos;
+        self.next_tok = Some(self.curr_tok.clone());
+
+        // reset lexer as if get_next_token was never called
+        self.curr_pos = last_pos;
+        self.curr_tok = last_tok;
+
+        Ok(self.next_tok.clone().unwrap())
+    }
+
     pub fn get_next_token(&mut self) -> Result<(), LexerErr> {
+        if self.next_tok.is_some() {
+            // Reset lexer
+            self.curr_pos = self.next_pos;
+            self.curr_tok = self.next_tok.clone().unwrap();
+
+            // Reset next_tok
+            self.next_tok = None;
+            return Ok(());
+        }
+
         if self.curr_pos == self.line_size {
             self.curr_tok.token_type = TokType::End;
             debug!("No more input, returning tok {:?}", TokType::End);
@@ -221,5 +251,67 @@ mod tests {
         let token = lexer.curr_tok;
         assert_eq!(token.token_type, TokType::Number);
         assert_eq!(token.token_content, String::from("2.3"));
+    }
+
+    #[rstest]
+    fn test_lexer_peeking() {
+        let string = String::from("x^3 + y\n");
+        let mut lexer = Lexer::lexer_init(string);
+
+        lexer.get_next_token().unwrap();
+        assert_eq!(lexer.curr_tok.token_type, TokType::Xvar);
+        assert_eq!(lexer.curr_pos, 1);
+
+        // peek ahead
+        let next_token = lexer.peek_next_token().unwrap();
+        assert_eq!(next_token.token_type, TokType::Caret);
+        // Check that peeking did not change lexer state
+        assert_eq!(lexer.curr_tok.token_type, TokType::Xvar);
+        assert_eq!(lexer.curr_pos, 1);
+
+        // Go to next peeked token
+        lexer.get_next_token().unwrap();
+        assert_eq!(lexer.curr_tok.token_type, TokType::Caret);
+        assert_eq!(lexer.curr_pos, 2);
+
+        lexer.get_next_token().unwrap();
+        assert_eq!(lexer.curr_tok.token_type, TokType::Number);
+        assert_eq!(lexer.curr_pos, 3);
+
+        // peek ahead
+        let next_token = lexer.peek_next_token().unwrap();
+        assert_eq!(next_token.token_type, TokType::Plus);
+        // Check that peeking did not change lexer state
+        assert_eq!(lexer.curr_tok.token_type, TokType::Number);
+        assert_eq!(lexer.curr_pos, 3);
+    }
+
+    #[rstest]
+    fn test_lexer_peeking_twice() {
+        let string = String::from("x^3 + y\n");
+        let mut lexer = Lexer::lexer_init(string);
+
+        lexer.get_next_token().unwrap();
+        assert_eq!(lexer.curr_tok.token_type, TokType::Xvar);
+        assert_eq!(lexer.curr_pos, 1);
+
+        // peek ahead
+        let next_token = lexer.peek_next_token().unwrap();
+        assert_eq!(next_token.token_type, TokType::Caret);
+        // Check that peeking did not change lexer state
+        assert_eq!(lexer.curr_tok.token_type, TokType::Xvar);
+        assert_eq!(lexer.curr_pos, 1);
+
+        // peek ahead again
+        let next_token = lexer.peek_next_token().unwrap();
+        assert_eq!(next_token.token_type, TokType::Caret);
+        // Check that peeking did not change lexer state
+        assert_eq!(lexer.curr_tok.token_type, TokType::Xvar);
+        assert_eq!(lexer.curr_pos, 1);
+
+        // Go to next peeked token
+        lexer.get_next_token().unwrap();
+        assert_eq!(lexer.curr_tok.token_type, TokType::Caret);
+        assert_eq!(lexer.curr_pos, 2);
     }
 }
