@@ -59,6 +59,7 @@ impl Lexer {
     }
 
     pub fn get_curr_char(&self) -> Result<char, LexerErr> {
+        // The curr char always points to the most recently untokenized char.
         if self.curr_pos > self.line_size {
             error!("Invalid value for curr_pos {}", self.curr_pos);
             return Err(LexerErr::InvalidCharPos);
@@ -243,14 +244,25 @@ mod tests {
     }
 
     #[rstest]
-    fn test_lexer_numbers() {
+    fn test_lexer_tokenize_float() {
         let string = String::from("2.3\n");
         let mut lexer = Lexer::lexer_init(string);
 
         lexer.get_next_token().unwrap();
         let token = lexer.curr_tok;
         assert_eq!(token.token_type, TokType::Number);
-        assert_eq!(token.token_content, String::from("2.3"));
+        assert_eq!(token.token_content.as_str(), "2.3");
+    }
+
+    #[rstest]
+    fn test_lexer_tokenize_int() {
+        let string = String::from("123\n");
+        let mut lexer = Lexer::lexer_init(string);
+
+        lexer.get_next_token().unwrap();
+        let token = lexer.curr_tok;
+        assert_eq!(token.token_type, TokType::Number);
+        assert_eq!(token.token_content.as_str(), "123");
     }
 
     #[rstest]

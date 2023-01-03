@@ -25,18 +25,26 @@ impl Parser {
         let now = Instant::now();
         let start_ind = self.lexer.curr_pos;
 
+        // get minus symbol
         let mut coefficient = 1.0;
-        if self.lexer.curr_tok.token_type == TokType::Number {
-            coefficient = self.lexer.curr_tok.token_content.parse::<f64>().unwrap();
+        if self.lexer.curr_tok.token_type == TokType::Minus {
+            coefficient = -1.0;
             self.lexer.get_next_token().unwrap();
         }
-        // get minus symbol
-        if self.lexer.curr_tok.token_type == TokType::Minus {
-            coefficient *= -1.0;
+
+        // get coefficient
+        if self.lexer.curr_tok.token_type == TokType::Number {
+            let abs_coeff = self.lexer.curr_tok.token_content.parse::<f64>().unwrap();
+            if coefficient > 0.0 {
+                coefficient = abs_coeff;
+            } else {
+                coefficient = -1.0 * abs_coeff;
+            }
             self.lexer.get_next_token().unwrap();
         }
 
         let mut power_list = vec![0; 3];
+        // A single loop will parse x ^ num
         loop {
             let prev_position = self.lexer.curr_pos;
 
@@ -62,7 +70,10 @@ impl Parser {
                     self.lexer.get_next_token().unwrap();
                     // get number
                     if self.lexer.curr_tok.token_type != TokType::Number {
-                        error!("Expected TokType::Number after ^");
+                        error!(
+                            "Expected number after ^, found {:?}",
+                            self.lexer.curr_tok.token_type
+                        );
                         return Err(ParserErr::ExpectedToken);
                     }
                     exponent = self.lexer.curr_tok.token_content.parse::<i32>().unwrap();
@@ -105,14 +116,13 @@ impl Parser {
                         polynomial += -1.0 * monomial_res;
                     } else {
                         info!(
-                            "XXX token is back to MINUS: {:?}",
+                            "token is back to MINUS: {:?}",
                             self.lexer.curr_tok.token_type
                         );
                         break;
                     }
                 }
                 TokType::Plus => {
-                    info!("Meowmix is great!");
                     let next_token = self.lexer.peek_next_token().unwrap();
                     if next_token.token_type == TokType::Number
                         || next_token.token_type == TokType::Xvar
@@ -122,7 +132,7 @@ impl Parser {
                         polynomial += monomial_res;
                     } else {
                         info!(
-                            "XXX token is back to PLUS: {:?}",
+                            "token is back to PLUS: {:?}",
                             self.lexer.curr_tok.token_type
                         );
                         break;
@@ -185,7 +195,8 @@ impl Parser {
             TokType::Mul => {
                 self.lexer.get_next_token().unwrap();
                 let other = self.parse_factor_expr()?;
-                return Ok(polynomial * other);
+                let mul = polynomial * other;
+                return Ok(mul);
             }
             _ => {
                 return Ok(polynomial);
@@ -203,7 +214,8 @@ impl Parser {
             TokType::Plus => {
                 self.lexer.get_next_token().unwrap();
                 let other = self.parse_term_expr()?;
-                return Ok(polynomial + other);
+                let sum = polynomial + other;
+                return Ok(sum);
             }
             _ => {
                 return Ok(polynomial);
@@ -288,8 +300,8 @@ mod tests {
         let polynomial = parser.parse_polynomial().unwrap();
 
         assert_eq!(polynomial.monomials.len(), 2);
-        assert_eq!(polynomial.monomials[0].coefficient, 1.0);
-        assert_eq!(polynomial.monomials[1].coefficient, 4.0);
+        assert_eq!(polynomial.monomials[0].coefficient, 4.0);
+        assert_eq!(polynomial.monomials[1].coefficient, 1.0);
     }
 
     #[rstest]
@@ -299,9 +311,9 @@ mod tests {
         let polynomial = parser.parse_polynomial().unwrap();
 
         assert_eq!(polynomial.monomials.len(), 3);
-        assert_eq!(polynomial.monomials[0].expr().as_str(), "3x");
+        assert_eq!(polynomial.monomials[0].expr().as_str(), "4xyz");
         assert_eq!(polynomial.monomials[1].expr().as_str(), "3yz");
-        assert_eq!(polynomial.monomials[2].expr().as_str(), "4xyz");
+        assert_eq!(polynomial.monomials[2].expr().as_str(), "3x");
     }
 
     #[rstest]
@@ -338,7 +350,7 @@ mod tests {
         let mut parser = Parser::parser_init(String::from("(x^4 + 1) * ((x^3 + 2x) * (x + 1))"));
         let polynomial = parser.start_parser();
         match polynomial {
-            Ok(v) => assert_eq!(v.expr(), "2x + 2x^2 + x^3 + x^4 + 2x^5 + 2x^6 + x^7 + x^8"),
+            Ok(v) => assert_eq!(v.expr(), "x^8 + x^7 + 2x^6 + 2x^5 + x^4 + x^3 + 2x^2 + 2x"),
             Err(e) => assert!(false, "{:?}", e),
         }
     }

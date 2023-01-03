@@ -15,11 +15,11 @@ impl Monomial {
         let degree_a: i32 = self.degree();
         let degree_b: i32 = other.degree();
 
-        if degree_a < degree_b {
+        if degree_a > degree_b {
             return Ordering::Less;
         }
 
-        if degree_a > degree_b {
+        if degree_a < degree_b {
             return Ordering::Greater;
         }
 
@@ -203,6 +203,26 @@ impl ops::Mul<f64> for Monomial {
 mod tests {
     use super::*;
     use rstest::*;
+
+    #[fixture]
+    fn monomial_a() -> Monomial {
+        Monomial::from("xyz").unwrap()
+    }
+
+    #[fixture]
+    fn monomial_b() -> Monomial {
+        Monomial::from("3.5x^2yz^5").unwrap()
+    }
+
+    #[fixture]
+    fn monomial_c() -> Monomial {
+        Monomial::from("5y^2x").unwrap()
+    }
+
+    #[fixture]
+    fn monomial_d() -> Monomial {
+        Monomial::from("100z^5y^2").unwrap()
+    }
 
     #[rstest]
     fn test_equality() {
@@ -397,6 +417,20 @@ mod tests {
     }
 
     #[rstest]
+    fn test_ordering_m() {
+        // x^2 < x
+        let monomial_a = Monomial {
+            coefficient: 1.0,
+            power_list: vec![2, 0, 0],
+        };
+        let monomial_b = Monomial {
+            coefficient: 1.0,
+            power_list: vec![1, 0, 0],
+        };
+        assert!(monomial_a < monomial_b);
+    }
+
+    #[rstest]
     fn test_mul_a() {
         let monomial_a = Monomial {
             coefficient: 5.0,
@@ -442,24 +476,58 @@ mod tests {
     }
 
     #[rstest]
-    fn test_monomial_from_str_a() {
-        let monomial = Monomial::from("xyz").unwrap();
-
-        assert_eq!(monomial.coefficient, 1.0);
-        assert_eq!(monomial.power(0), 1);
-        assert_eq!(monomial.power(1), 1);
-        assert_eq!(monomial.power(2), 1);
-        assert_eq!(monomial.degree(), 3);
+    fn test_monomial_from_str_a(monomial_a: Monomial) {
+        assert_eq!(monomial_a.coefficient, 1.0);
+        assert_eq!(monomial_a.degree(), 3);
+        assert_eq!(monomial_a.power(0), 1);
+        assert_eq!(monomial_a.power(1), 1);
+        assert_eq!(monomial_a.power(2), 1);
     }
 
     #[rstest]
-    fn test_monomial_from_str_b() {
-        let monomial = Monomial::from("3.5x^2yz^5").unwrap();
+    fn test_monomial_from_str_b(monomial_b: Monomial) {
+        assert_eq!(monomial_b.coefficient, 3.5);
+        assert_eq!(monomial_b.degree(), 8);
+        assert_eq!(monomial_b.power(0), 2);
+        assert_eq!(monomial_b.power(1), 1);
+        assert_eq!(monomial_b.power(2), 5);
+    }
 
-        assert_eq!(monomial.coefficient, 3.5);
-        assert_eq!(monomial.degree(), 8);
-        assert_eq!(monomial.power(0), 2);
-        assert_eq!(monomial.power(1), 1);
-        assert_eq!(monomial.power(2), 5);
+    #[rstest]
+    fn test_monomial_from_str_c(monomial_c: Monomial) {
+        assert_eq!(monomial_c.coefficient, 5.0);
+        assert_eq!(monomial_c.degree(), 3);
+        assert_eq!(monomial_c.power(0), 1);
+        assert_eq!(monomial_c.power(1), 2);
+        assert_eq!(monomial_c.power(2), 0);
+    }
+
+    #[rstest]
+    fn test_monomial_from_str_d(monomial_d: Monomial) {
+        assert_eq!(monomial_d.coefficient, 100.0);
+        assert_eq!(monomial_d.degree(), 7);
+        assert_eq!(monomial_d.power(0), 0);
+        assert_eq!(monomial_d.power(1), 2);
+        assert_eq!(monomial_d.power(2), 5);
+    }
+
+    #[rstest]
+    fn test_monomial_from_str_expected_expr_a(monomial_a: Monomial) {
+        assert_eq!(monomial_a.expr().as_str(), "xyz");
+    }
+
+    #[rstest]
+    fn test_monomial_from_str_expected_expr_b(monomial_b: Monomial) {
+        assert_eq!(monomial_b.expr().as_str(), "3.5x^2yz^5");
+    }
+
+    #[rstest]
+    fn test_monomial_from_str_expected_expr_c(monomial_c: Monomial) {
+        assert_eq!(monomial_c.expr().as_str(), "5xy^2");
+    }
+
+    #[rstest]
+    fn test_monomial_from_str_expected_expr_d(monomial_d: Monomial) {
+        assert_eq!(monomial_d.expr().as_str(), "100y^2z^5");
     }
 }
