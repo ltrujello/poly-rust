@@ -87,6 +87,7 @@ impl Polynomial {
         let polynomial = parser.parse_polynomial()?;
         Ok(polynomial)
     }
+
 }
 
 impl Clone for Polynomial {
@@ -117,18 +118,8 @@ impl ops::AddAssign<Monomial> for Polynomial {
 // Polynomial += Polynomial
 impl ops::AddAssign for Polynomial {
     fn add_assign(&mut self, other: Self) {
-        let mut leftover_monomials = Vec::new();
-        for mut monomial in self.monomials.iter_mut() {
-            for other_monomial in &other.monomials {
-                if monomial.cmp_terms(&other_monomial) == Ordering::Equal {
-                    monomial.coefficient += other_monomial.coefficient;
-                    continue;
-                }
-                leftover_monomials.push(other_monomial.clone());
-            }
-        }
-        for monomial in leftover_monomials {
-            self.monomials.push(monomial);
+        for monomial in other.monomials {
+            *self += monomial;
         }
     }
 }
@@ -215,6 +206,16 @@ mod tests {
 
     #[fixture]
     fn polynomial_a() -> Polynomial {
+        Polynomial::from("5x^2 + 6y^2").unwrap()
+    }
+
+    #[fixture]
+    fn polynomial_b() -> Polynomial {
+        Polynomial::from("7y^2").unwrap()
+    }
+
+    #[rstest]
+    fn test_polynomial_from_str_a(polynomial_a: Polynomial) {
         // 5x^2 + 6y^2
         let monomial_a = Monomial {
             coefficient: 5.0,
@@ -224,28 +225,97 @@ mod tests {
             coefficient: 6.0,
             power_list: vec![0, 2, 0],
         };
-        let polynomial_a = Polynomial {
-            monomials: vec![monomial_a, monomial_b],
-        };
-        polynomial_a
+        assert_eq!(polynomial_a.monomials[0], monomial_a);
+        assert_eq!(polynomial_a.monomials[1], monomial_b);
     }
 
-    #[fixture]
-    fn polynomial_b() -> Polynomial {
+    #[rstest]
+    fn test_polynomial_from_str_b(polynomial_b: Polynomial) {
         // 7y^2
-        let monomial_c = Monomial {
+        let monomial = Monomial {
             coefficient: 7.0,
             power_list: vec![0, 2, 0],
         };
-        let polynomial_b = Polynomial {
-            monomials: vec![monomial_c],
-        };
-        polynomial_b
+        assert_eq!(polynomial_b.monomials[0], monomial);
+    }
+
+    #[rstest]
+    fn test_polynomial_from_str_c() {
+        let polynomial = Polynomial::from("2x + y + z + 2x + y + y + y + z").unwrap();
+
+        assert_eq!(polynomial.monomials.len(), 3);
+        assert_eq!(polynomial.expr(), "4x + 4y + 2z");
+        assert_eq!(polynomial.monomials[0].coefficient, 4.0);
+        assert_eq!(polynomial.monomials[0].coefficient, 4.0);
+        assert_eq!(polynomial.monomials[1].coefficient, 4.0);
+        assert_eq!(polynomial.monomials[2].coefficient, 2.0);
+        assert_eq!(polynomial.monomials[0].expr().as_str(), "4x");
+        assert_eq!(polynomial.monomials[1].expr().as_str(), "4y");
+        assert_eq!(polynomial.monomials[2].expr().as_str(), "2z");
+    }
+
+    #[rstest]
+    fn test_polynomial_from_str_d() {
+        let polynomial = Polynomial::from("2xyz + yzx + zxy + xy").unwrap();
+
+        assert_eq!(polynomial.monomials.len(), 2);
+        assert_eq!(polynomial.expr(), "4xyz + xy");
+        assert_eq!(polynomial.monomials[0].coefficient, 4.0);
+        assert_eq!(polynomial.monomials[1].coefficient, 1.0);
+        assert_eq!(polynomial.monomials[0].expr().as_str(), "4xyz");
+        assert_eq!(polynomial.monomials[1].expr().as_str(), "xy");
+    }
+
+    #[rstest]
+    fn test_addition_1(polynomial_a: Polynomial, polynomial_b: Polynomial) {
+        let polynomial = polynomial_b + polynomial_a;
+
+        assert_eq!(polynomial.monomials.len(), 2);
+        assert_eq!(polynomial.expr(), "5x^2 + 13y^2");
+        assert_eq!(polynomial.monomials[0].coefficient, 5.0);
+        assert_eq!(polynomial.monomials[1].coefficient, 13.0);
+        assert_eq!(polynomial.monomials[0].expr().as_str(), "5x^2");
+        assert_eq!(polynomial.monomials[1].expr().as_str(), "13y^2");
+    }
+
+    #[rstest]
+    fn test_polynomial_addition_like_terms_a() {
+        let mut polynomial = Polynomial::from("x^4 + x^3 + x^2").unwrap();
+        let other = Polynomial::from("x^2").unwrap();
+        polynomial += other;
+
+        assert_eq!(polynomial.monomials.len(), 3);
+        assert_eq!(polynomial.expr(), "x^4 + x^3 + 2x^2");
+        assert_eq!(polynomial.monomials[0].coefficient, 1.0);
+        assert_eq!(polynomial.monomials[1].coefficient, 1.0);
+        assert_eq!(polynomial.monomials[2].coefficient, 2.0);
+        assert_eq!(polynomial.monomials[0].expr().as_str(), "x^4");
+        assert_eq!(polynomial.monomials[1].expr().as_str(), "x^3");
+        assert_eq!(polynomial.monomials[2].expr().as_str(), "2x^2");
+    }
+
+    #[rstest]
+    fn test_polynomial_addition_like_terms_b() {
+        let mut polynomial = Polynomial::from("x^4 + x^3 + x^2").unwrap();
+        let other = Polynomial::from("x^2 + x^4 + x").unwrap();
+        polynomial += other;
+
+        assert_eq!(polynomial.monomials.len(), 4);
+        assert_eq!(polynomial.expr(), "2x^4 + x^3 + 2x^2 + x");
+        assert_eq!(polynomial.monomials[0].coefficient, 2.0);
+        assert_eq!(polynomial.monomials[1].coefficient, 1.0);
+        assert_eq!(polynomial.monomials[2].coefficient, 2.0);
+        assert_eq!(polynomial.monomials[3].coefficient, 1.0);
+        assert_eq!(polynomial.monomials[0].expr().as_str(), "2x^4");
+        assert_eq!(polynomial.monomials[1].expr().as_str(), "x^3");
+        assert_eq!(polynomial.monomials[2].expr().as_str(), "2x^2");
+        assert_eq!(polynomial.monomials[3].expr().as_str(), "x");
     }
 
     #[rstest]
     fn test_mul_1(polynomial_a: Polynomial, polynomial_b: Polynomial) {
         let polynomial = polynomial_a * polynomial_b;
+        assert_eq!(polynomial.expr(), "35x^2y^2 + 42y^4");
         assert_eq!(
             polynomial.monomials[0],
             Monomial {
@@ -260,28 +330,7 @@ mod tests {
                 power_list: vec![0, 4, 0],
             }
         );
-    }
-
-    #[rstest]
-    fn test_addition_1(polynomial_a: Polynomial, polynomial_b: Polynomial) {
-        let polynomial = polynomial_b + polynomial_a;
-        assert_eq!(polynomial.expr(), "13y^2 + 5x^2");
-    }
-
-    #[rstest]
-    fn test_polynomial_from_str_a() {
-        let polynomial = Polynomial::from("2x + y + z + 2x + y + y + y + z").unwrap();
-        assert_eq!(polynomial.monomials.len(), 3);
-        assert_eq!(polynomial.monomials[0].expr().as_str(), "4x");
-        assert_eq!(polynomial.monomials[1].expr().as_str(), "4y");
-        assert_eq!(polynomial.monomials[2].expr().as_str(), "2z");
-    }
-
-    #[rstest]
-    fn test_polynomial_from_str_b() {
-        let polynomial = Polynomial::from("2xyz + yzx + zxy + xy").unwrap();
-        assert_eq!(polynomial.monomials.len(), 2);
-        assert_eq!(polynomial.monomials[0].coefficient, 1.0);
-        assert_eq!(polynomial.monomials[1].coefficient, 4.0);
+        assert_eq!(polynomial.monomials[0].expr().as_str(), "35x^2y^2");
+        assert_eq!(polynomial.monomials[1].expr().as_str(), "42y^4");
     }
 }
