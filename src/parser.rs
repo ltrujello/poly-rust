@@ -217,6 +217,12 @@ impl Parser {
                 let sum = polynomial + other;
                 return Ok(sum);
             }
+            TokType::Minus => {
+                self.lexer.get_next_token().unwrap();
+                let other = self.parse_term_expr()?;
+                let sum = polynomial - other;
+                return Ok(sum);
+            }
             _ => {
                 return Ok(polynomial);
             }
@@ -398,6 +404,36 @@ mod tests {
         }
     }
 
+    #[rstest]
+    fn parse_polynomial_addition_and_multiplication() {
+        let mut parser = Parser::parser_init(String::from("x^3 + x^2 + (x + 5)*(x - 7)"));
+        let polynomial = parser.start_parser();
+        match polynomial {
+            Ok(v) => assert_eq!(v.expr(), "x^3 + 2x^2 - 2x - 35"),
+            Err(e) => assert!(false, "{:?}", e),
+        }
+    }
+
+    #[rstest]
+    fn parse_polynomial_subtraction_and_multiplication_a() {
+        let mut parser = Parser::parser_init(String::from("x^3 - x^2 + (x + 5)*(x - 7)"));
+        let polynomial = parser.start_parser();
+        match polynomial {
+            Ok(v) => assert_eq!(v.expr(), "x^3 - 2x - 35"),
+            Err(e) => assert!(false, "{:?}", e),
+        }
+    }
+
+    #[rstest]
+    fn parse_polynomial_subtraction_and_multiplication_b() {
+        let mut parser = Parser::parser_init(String::from("x^3 - x^2 - (x + 5)*(x - 7)"));
+        let polynomial = parser.start_parser();
+        match polynomial {
+            Ok(v) => assert_eq!(v.expr(), "x^3 - 2x^2 + 2x + 35"),
+            Err(e) => assert!(false, "{:?}", e),
+        }
+    }
+    
     // Valid expressions
     // (x^4 + 1) * ((x^3 + 2x) * (x + 1))
     // (x^4 + 1) * (x^3)

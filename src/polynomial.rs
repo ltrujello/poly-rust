@@ -1,6 +1,5 @@
 use crate::parser::{Parser, ParserErr};
 use std::clone::Clone;
-use std::cmp::Ordering;
 use std::ops;
 
 use crate::monomial::Monomial;
@@ -160,6 +159,16 @@ impl<'a> ops::Add<&'a Polynomial> for &'a Polynomial {
     fn add(self, other: Self) -> Polynomial {
         let mut new_poly = self.clone();
         new_poly += other.clone();
+        new_poly
+    }
+}
+
+// Polynomial - Polynomial
+impl ops::Sub for Polynomial {
+    type Output = Self;
+    fn sub(self, other: Self) -> Self {
+        let mut new_poly = self.clone();
+        new_poly += -1.0 * other;
         new_poly
     }
 }
