@@ -431,6 +431,20 @@ mod tests {
     }
 
     #[rstest]
+    fn test_ordering_n() {
+        // x^2y^2 < x^3
+        let monomial_a = Monomial {
+            coefficient: 1.0,
+            power_list: vec![2, 2, 0],
+        };
+        let monomial_b = Monomial {
+            coefficient: 1.0,
+            power_list: vec![3, 0, 0],
+        };
+        assert!(monomial_a < monomial_b);
+    }
+
+    #[rstest]
     fn test_mul_a() {
         let monomial_a = Monomial {
             coefficient: 5.0,

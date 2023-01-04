@@ -35,13 +35,14 @@ fn main() {
     // let monomial = Monomial::from("2xyz").unwrap();
     // println!("{}", monomial.expr())
 
-    let mut parser = Parser::parser_init(String::from("x^3 + x^2 + (x^2)"));
-    // let mut parser = Parser::parser_init(String::from("x^3 + x^2 + (x + 5)*(x - 7)"));
+    let mut parser = Parser::parser_init(String::from(
+        "(x^2 + y + z + 1)*(x - 7 + y)*(x^2 + y + z + 1)",
+    ));
     let polynomial = parser.start_parser();
     match polynomial {
         Ok(v) => {
             println!("{}", v.expr());
-            println!("{:#?}", v);
+            //println!("{:#?}", v);
         }
         Err(e) => println!("{:?}", e),
     }

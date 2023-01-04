@@ -86,7 +86,6 @@ impl Polynomial {
         let polynomial = parser.parse_polynomial()?;
         Ok(polynomial)
     }
-
 }
 
 impl Clone for Polynomial {

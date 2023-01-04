@@ -195,7 +195,14 @@ impl Parser {
             TokType::Mul => {
                 self.lexer.get_next_token().unwrap();
                 let other = self.parse_factor_expr()?;
-                let mul = polynomial * other;
+                let mut mul = polynomial * other;
+
+                while self.lexer.curr_tok.token_type == TokType::Mul {
+                    self.lexer.get_next_token().unwrap();
+                    let other = self.parse_factor_expr()?;
+                    mul = mul * other;
+                }
+
                 return Ok(mul);
             }
             _ => {
@@ -433,7 +440,73 @@ mod tests {
             Err(e) => assert!(false, "{:?}", e),
         }
     }
-    
+
+    #[rstest]
+    fn parse_polynomial_repeated_multiplication_linear_factors() {
+        let mut parser = Parser::parser_init(String::from("(x + 5)*(x - 7)*(x - 4)"));
+        let polynomial = parser.start_parser();
+        match polynomial {
+            Ok(v) => assert_eq!(v.expr(), "x^3 - 6x^2 - 27x + 140"),
+            Err(e) => assert!(false, "{:?}", e),
+        }
+    }
+
+    #[rstest]
+    fn parse_polynomial_repeated_multiplication_a() {
+        let mut parser = Parser::parser_init(String::from("x^4 + x^3 + (x + 5)*(x - 7)*(x - 4)"));
+        let polynomial = parser.start_parser();
+        match polynomial {
+            Ok(v) => assert_eq!(v.expr(), "x^4 + 2x^3 - 6x^2 - 27x + 140"),
+            Err(e) => assert!(false, "{:?}", e),
+        }
+    }
+
+    #[rstest]
+    fn parse_polynomial_repeated_multiplication_b() {
+        let mut parser = Parser::parser_init(String::from(
+            "(x + 5)*(x - 7)*(x - 4) + (x + 5)*(x - 7)*(x - 4)",
+        ));
+        let polynomial = parser.start_parser();
+        match polynomial {
+            Ok(v) => assert_eq!(v.expr(), "2x^3 - 12x^2 - 54x + 280"),
+            Err(e) => assert!(false, "{:?}", e),
+        }
+    }
+
+    #[rstest]
+    fn parse_polynomial_repeated_multiplication_quadratic_factor() {
+        let mut parser = Parser::parser_init(String::from("(2x + 10)*(x - 7)*(x^2 + x + 1)"));
+        let polynomial = parser.start_parser();
+        match polynomial {
+            Ok(v) => assert_eq!(v.expr(), "2x^4 - 2x^3 - 72x^2 - 74x - 70"),
+            Err(e) => assert!(false, "{:?}", e),
+        }
+    }
+
+    #[rstest]
+    fn parse_polynomial_repeated_multiplication_multivariate_factor_a() {
+        let mut parser = Parser::parser_init(String::from("(2x + 10)*(x - 7)*(x^2 + y + z + 1)"));
+        let polynomial = parser.start_parser();
+        match polynomial {
+            Ok(v) => assert_eq!(
+                v.expr(),
+                "2x^4 - 4x^3 + 2x^2y + 2x^2z - 68x^2 - 4xy - 4xz - 4x - 70y - 70z - 70"
+            ),
+            Err(e) => assert!(false, "{:?}", e),
+        }
+    }
+
+    #[rstest]
+    fn parse_polynomial_repeated_multiplication_multivariate_factor_b() {
+        let mut parser = Parser::parser_init(String::from(
+            "(x^2 + y + z + 1)*(x - 7 + y)*(x^2 + y + z + 1)",
+        ));
+        let polynomial = parser.start_parser();
+        match polynomial {
+            Ok(v) => assert_eq!(v.expr(), "x^5 + x^4y - 7x^4 + 2x^3y + 2x^3z + 2x^2y^2 + 2x^2yz + 2x^3 - 12x^2y - 14x^2z + xy^2 + 2xyz + xz^2 + y^3 + 2y^2z + yz^2 - 14x^2 + 2xy + 2xz - 5y^2 - 12yz - 7z^2 + x - 13y - 14z - 7"),
+            Err(e) => assert!(false, "{:?}", e),
+        }
+    }
     // Valid expressions
     // (x^4 + 1) * ((x^3 + 2x) * (x + 1))
     // (x^4 + 1) * (x^3)
