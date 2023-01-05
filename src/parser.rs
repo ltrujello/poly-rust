@@ -160,13 +160,26 @@ impl Parser {
         match self.lexer.curr_tok.token_type {
             TokType::Lpar => {
                 self.lexer.get_next_token().unwrap();
-                polynomial = self.parse_poly_expr();
+                let inner = self.parse_poly_expr()?;
 
                 if self.lexer.curr_tok.token_type == TokType::Rpar {
                     self.lexer.get_next_token().unwrap();
                 } else {
                     error!("Expected closing parenthesis at end of expression");
                     return Err(ParserErr::ExpectedToken);
+                }
+                if self.lexer.curr_tok.token_type == TokType::Caret {
+                    self.lexer.get_next_token().unwrap();
+                    if self.lexer.curr_tok.token_type == TokType::Number {
+                        self.lexer.get_next_token().unwrap();
+                        let exponent = self.lexer.curr_tok.token_content.parse::<i32>().unwrap();
+                        polynomial = Ok(inner.pow(exponent));
+                    } else {
+                        error!("Expected number after caret");
+                        return Err(ParserErr::ExpectedToken);
+                    }
+                } else {
+                    polynomial = Ok(inner);
                 }
             }
             TokType::Minus => {
@@ -507,6 +520,31 @@ mod tests {
             Err(e) => assert!(false, "{:?}", e),
         }
     }
+
+    #[rstest]
+    fn parse_polynomial_exponentiation_a() {
+        let mut parser = Parser::parser_init(String::from(
+            "(x + 2)^3",
+        ));
+        let polynomial = parser.start_parser();
+        match polynomial {
+            Ok(v) => assert_eq!(v.expr(), "x^3 + 6x^2 + 12x + 8"),
+            Err(e) => assert!(false, "{:?}", e),
+        }
+    }
+
+    #[rstest]
+    fn parse_polynomial_exponentiation_a() {
+        let mut parser = Parser::parser_init(String::from(
+            "(x + 3)^2*(x + 3)",
+        ));
+        let polynomial = parser.start_parser();
+        match polynomial {
+            Ok(v) => assert_eq!(v.expr(), "x^3 + 9x^2 + 27x + 27"),
+            Err(e) => assert!(false, "{:?}", e),
+        }
+    }
+
     // Valid expressions
     // (x^4 + 1) * ((x^3 + 2x) * (x + 1))
     // (x^4 + 1) * (x^3)

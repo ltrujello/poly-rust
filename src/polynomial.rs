@@ -86,6 +86,16 @@ impl Polynomial {
         let polynomial = parser.parse_polynomial()?;
         Ok(polynomial)
     }
+
+    pub fn pow(&self, exponent: i32) -> Polynomial {
+        let mut ind = exponent - 1;
+        let mut res = self.clone();
+        while ind > 0 {
+            res = res * self;
+            ind -= 1;
+        }
+        res
+    }
 }
 
 impl Clone for Polynomial {
@@ -183,6 +193,15 @@ impl ops::Mul for Polynomial {
             }
         }
         polynomial
+    }
+}
+
+// Polynomial * &Polynomial
+impl ops::Mul<&Polynomial> for Polynomial {
+    type Output = Self;
+    fn mul(self, other: &Self) -> Self {
+        let res = self * other.clone();
+        res
     }
 }
 
@@ -340,5 +359,23 @@ mod tests {
         );
         assert_eq!(polynomial.monomials[0].expr().as_str(), "35x^2y^2");
         assert_eq!(polynomial.monomials[1].expr().as_str(), "42y^4");
+    }
+
+    #[rstest]
+    fn test_pow_a() {
+        let polynomial = Polynomial::from("x + 2").unwrap();
+        assert_eq!(polynomial.pow(1).expr(), "x + 2");
+    }
+
+    #[rstest]
+    fn test_pow_b() {
+        let polynomial = Polynomial::from("x + 2").unwrap();
+        assert_eq!(polynomial.pow(2).expr(), "x^2 + 4x + 4");
+    }
+
+    #[rstest]
+    fn test_pow_c() {
+        let polynomial = Polynomial::from("x + 2").unwrap();
+        assert_eq!(polynomial.pow(3).expr(), "x^3 + 6x^2 + 12x + 8");
     }
 }
