@@ -185,9 +185,12 @@ impl Parser {
             TokType::Minus => {
                 self.lexer.get_next_token().unwrap();
                 if self.lexer.curr_tok.token_type == TokType::Lpar {
-                    polynomial = self.parse_factor_expr();
+                    let mut inner = self.parse_factor_expr()?;
+                    inner.scale(-1.0);
+                    polynomial = Ok(inner);
                 } else {
-                    polynomial = self.parse_polynomial();
+                    error!("Unexpected Lpar received");
+                    return Err(ParserErr::UnexpectedToken);
                 }
             }
             _ => {
@@ -640,6 +643,55 @@ mod tests {
         }
     }
 
+    #[rstest]
+    fn parse_polynomial_distribute_negative_a() {
+        let mut parser = Parser::parser_init(String::from("-(x + y + z)"));
+        let polynomial = parser.start_parser();
+        match polynomial {
+            Ok(v) => assert_eq!(v.expr(), "-x - y - z"),
+            Err(e) => assert!(false, "{:?}", e),
+        }
+    }
+
+    #[rstest]
+    fn parse_polynomial_distribute_negative_b() {
+        let mut parser = Parser::parser_init(String::from("-(x + 2)*(x + 2)"));
+        let polynomial = parser.start_parser();
+        match polynomial {
+            Ok(v) => assert_eq!(v.expr(), "-x^2 - 4x - 4"),
+            Err(e) => assert!(false, "{:?}", e),
+        }
+    }
+
+    #[rstest]
+    fn parse_polynomial_distribute_negative_c() {
+        let mut parser = Parser::parser_init(String::from("-(x^3 - (x + 3)*(x + 3) + x^2)"));
+        let polynomial = parser.start_parser();
+        match polynomial {
+            Ok(v) => assert_eq!(v.expr(), "-x^3 + 6x + 9"),
+            Err(e) => assert!(false, "{:?}", e),
+        }
+    }
+
+    #[rstest]
+    fn parse_polynomial_distribute_negative_d() {
+        let mut parser = Parser::parser_init(String::from("-(x + 2)*-(x + 2)*-(x + 2)"));
+        let polynomial = parser.start_parser();
+        match polynomial {
+            Ok(v) => assert_eq!(v.expr(), "-x^3 - 6x^2 - 12x - 8"),
+            Err(e) => assert!(false, "{:?}", e),
+        }
+    }
+
+    #[rstest]
+    fn parse_polynomial_distribute_negative_e() {
+        let mut parser = Parser::parser_init(String::from("-(x + 2)*-(x + 2) - -(x + 2)"));
+        let polynomial = parser.start_parser();
+        match polynomial {
+            Ok(v) => assert_eq!(v.expr(), "x^2 + 5x + 6"),
+            Err(e) => assert!(false, "{:?}", e),
+        }
+    }
     // Valid expressions
     // (x^4 + 1) * ((x^3 + 2x) * (x + 1))
     // (x^4 + 1) * (x^3)

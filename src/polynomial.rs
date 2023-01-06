@@ -96,6 +96,12 @@ impl Polynomial {
         }
         res
     }
+
+    pub fn scale(&mut self, scale: f64) -> () {
+        for monomial in self.monomials.iter_mut() {
+            monomial.coefficient *= scale;
+        }
+    }
 }
 
 impl Clone for Polynomial {
