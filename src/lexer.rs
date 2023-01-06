@@ -149,25 +149,22 @@ impl Lexer {
             }
             '^' => self.curr_tok.token_type = TokType::Caret,
             '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' => {
-                let mut number = 0.0;
+                let mut number = String::from("");
                 while ch.is_digit(10) {
-                    let digit = ch.to_digit(10).unwrap() as f32;
-                    number = 10.0 * number + digit;
+                    number.push(ch);
                     ch = self.march_pos()?;
                 }
                 if ch == '.' {
+                    number.push(ch);
                     ch = self.march_pos()?;
-                    let mut exp = -1;
                     while ch.is_digit(10) {
-                        let digit = ch.to_digit(10).unwrap() as f32;
-                        number = number + digit * f32::powi(10.0, exp);
-                        exp -= 1;
+                        number.push(ch);
                         ch = self.march_pos()?;
                     }
                 }
                 ch = self.unmarch_pos()?; // went too far in last loop
                 self.curr_tok.token_type = TokType::Number;
-                self.curr_tok.token_content = format!("{number}");
+                self.curr_tok.token_content = number;
             }
             '.' => self.curr_tok.token_type = TokType::Period,
             _ => {
@@ -252,6 +249,17 @@ mod tests {
         let token = lexer.curr_tok;
         assert_eq!(token.token_type, TokType::Number);
         assert_eq!(token.token_content.as_str(), "2.3");
+    }
+
+    #[rstest]
+    fn test_lexer_tokenize_float_b() {
+        let string = String::from("123.232324\n");
+        let mut lexer = Lexer::lexer_init(string);
+
+        lexer.get_next_token().unwrap();
+        let token = lexer.curr_tok;
+        assert_eq!(token.token_type, TokType::Number);
+        assert_eq!(token.token_content.as_str(), "123.232324");
     }
 
     #[rstest]

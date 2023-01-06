@@ -168,6 +168,7 @@ impl Parser {
                     error!("Expected closing parenthesis at end of expression");
                     return Err(ParserErr::ExpectedToken);
                 }
+                // Check for exponent on closing parenthesis
                 if self.lexer.curr_tok.token_type == TokType::Caret {
                     self.lexer.get_next_token().unwrap();
                     if self.lexer.curr_tok.token_type == TokType::Number {
