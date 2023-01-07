@@ -1,4 +1,4 @@
-use crate::lexer::{Lexer, TokType};
+use crate::lexer::{Lexer, TokType, Token};
 use crate::monomial::Monomial;
 use crate::polynomial::Polynomial;
 use std::time::Instant;
@@ -11,14 +11,44 @@ pub struct Parser {
 pub enum ParserErr {
     ExpectedToken,
     UnexpectedToken,
+    LexerErr,
 }
 
 impl Parser {
     pub fn parser_init(current_line: String) -> Self {
         let lexer = Lexer::lexer_init(current_line);
         let mut parser = Parser { lexer: lexer };
-        parser.lexer.get_next_token().unwrap();
+        parser.get_next_token().unwrap();
         parser
+    }
+
+    pub fn get_next_token(&mut self) -> Result<(), ParserErr> {
+        match self.lexer.get_next_token() {
+            Ok(()) => (),
+            Err(e) => {
+                error!(
+                    "Error received while getting next token from lexer: {:?}",
+                    e
+                );
+                return Err(ParserErr::LexerErr);
+            }
+        }
+        Ok(())
+    }
+
+    pub fn peek_next_token(&mut self) -> Result<Token, ParserErr> {
+        match self.lexer.peek_next_token() {
+            Ok(v) => {
+                return Ok(v);
+            }
+            Err(e) => {
+                error!(
+                    "Error received while peeking next token from lexer: {:?}",
+                    e
+                );
+                return Err(ParserErr::LexerErr);
+            }
+        }
     }
 
     pub fn parse_monomial(&mut self) -> Result<Monomial, ParserErr> {
@@ -29,7 +59,7 @@ impl Parser {
         let mut coefficient = 1.0;
         if self.lexer.curr_tok.token_type == TokType::Minus {
             coefficient = -1.0;
-            self.lexer.get_next_token().unwrap();
+            self.get_next_token()?;
         }
 
         // get coefficient
@@ -40,7 +70,7 @@ impl Parser {
             } else {
                 coefficient = -1.0 * abs_coeff;
             }
-            self.lexer.get_next_token().unwrap();
+            self.get_next_token()?;
         }
 
         let mut power_list = vec![0; 3];
@@ -63,11 +93,11 @@ impl Parser {
                         return Err(ParserErr::UnexpectedToken);
                     }
                 }
-                self.lexer.get_next_token().unwrap();
+                self.get_next_token()?;
                 let exponent: i32;
                 // get caret
                 if self.lexer.curr_tok.token_type == TokType::Caret {
-                    self.lexer.get_next_token().unwrap();
+                    self.get_next_token()?;
                     // get number
                     if self.lexer.curr_tok.token_type != TokType::Number {
                         error!(
@@ -77,7 +107,7 @@ impl Parser {
                         return Err(ParserErr::ExpectedToken);
                     }
                     exponent = self.lexer.curr_tok.token_content.parse::<i32>().unwrap();
-                    self.lexer.get_next_token().unwrap();
+                    self.get_next_token()?;
                 } else {
                     exponent = 1;
                 }
@@ -107,11 +137,11 @@ impl Parser {
         loop {
             match self.lexer.curr_tok.token_type {
                 TokType::Minus => {
-                    let next_token = self.lexer.peek_next_token().unwrap();
+                    let next_token = self.peek_next_token()?;
                     if next_token.token_type == TokType::Number
                         || next_token.token_type == TokType::Xvar
                     {
-                        self.lexer.get_next_token().unwrap();
+                        self.get_next_token()?;
                         let monomial_res = self.parse_monomial()?;
                         polynomial += -1.0 * monomial_res;
                     } else {
@@ -123,11 +153,11 @@ impl Parser {
                     }
                 }
                 TokType::Plus => {
-                    let next_token = self.lexer.peek_next_token().unwrap();
+                    let next_token = self.peek_next_token()?;
                     if next_token.token_type == TokType::Number
                         || next_token.token_type == TokType::Xvar
                     {
-                        self.lexer.get_next_token().unwrap();
+                        self.get_next_token()?;
                         let monomial_res = self.parse_monomial()?;
                         polynomial += monomial_res;
                     } else {
@@ -159,20 +189,20 @@ impl Parser {
         let polynomial: Result<Polynomial, ParserErr>;
         match self.lexer.curr_tok.token_type {
             TokType::Lpar => {
-                self.lexer.get_next_token().unwrap();
+                self.get_next_token()?;
                 let inner = self.parse_poly_expr()?;
 
                 if self.lexer.curr_tok.token_type == TokType::Rpar {
-                    self.lexer.get_next_token().unwrap();
+                    self.get_next_token()?;
                 } else {
                     error!("Expected closing parenthesis at end of expression");
                     return Err(ParserErr::ExpectedToken);
                 }
                 // Check for exponent on closing parenthesis
                 if self.lexer.curr_tok.token_type == TokType::Caret {
-                    self.lexer.get_next_token().unwrap();
+                    self.get_next_token()?;
                     if self.lexer.curr_tok.token_type == TokType::Number {
-                        self.lexer.get_next_token().unwrap();
+                        self.get_next_token()?;
                         let exponent = self.lexer.curr_tok.token_content.parse::<i32>().unwrap();
                         polynomial = Ok(inner.pow(exponent));
                     } else {
@@ -184,7 +214,7 @@ impl Parser {
                 }
             }
             TokType::Minus => {
-                self.lexer.get_next_token().unwrap();
+                self.get_next_token()?;
                 if self.lexer.curr_tok.token_type == TokType::Lpar {
                     let mut inner = self.parse_factor_expr()?;
                     inner.scale(-1.0);
@@ -210,12 +240,12 @@ impl Parser {
         let polynomial = self.parse_factor_expr()?;
         match self.lexer.curr_tok.token_type {
             TokType::Mul => {
-                self.lexer.get_next_token().unwrap();
+                self.get_next_token()?;
                 let other = self.parse_factor_expr()?;
                 let mut mul = polynomial * other;
 
                 while self.lexer.curr_tok.token_type == TokType::Mul {
-                    self.lexer.get_next_token().unwrap();
+                    self.get_next_token()?;
                     let other = self.parse_factor_expr()?;
                     mul = mul * other;
                 }
@@ -240,12 +270,12 @@ impl Parser {
                 loop {
                     match self.lexer.curr_tok.token_type {
                         TokType::Plus => {
-                            self.lexer.get_next_token().unwrap();
+                            self.get_next_token()?;
                             let other = self.parse_term_expr()?;
                             sum = sum + other
                         }
                         TokType::Minus => {
-                            self.lexer.get_next_token().unwrap();
+                            self.get_next_token()?;
                             let other = self.parse_term_expr()?;
                             sum = sum - other
                         }
