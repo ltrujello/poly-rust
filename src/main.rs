@@ -35,7 +35,7 @@ fn main() {
     // let monomial = Monomial::from("2xyz").unwrap();
     // println!("{}", monomial.expr())
 
-    let mut parser = Parser::parser_init(String::from("-(x + y + z)^4"));
+    let mut parser = Parser::parser_init(String::from("(x^2 + y^2 + z^2)^2"));
     let polynomial = parser.start_parser();
     match polynomial {
         Ok(v) => {
