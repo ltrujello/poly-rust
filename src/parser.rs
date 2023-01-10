@@ -9,9 +9,10 @@ pub struct Parser {
 
 #[derive(Debug)]
 pub enum ParserErr {
-    ExpectedToken,
-    UnexpectedToken,
-    LexerErr,
+    ExpectedToken(String),
+    UnexpectedToken(String),
+    LexerErr(String),
+    InvalidSyntax(String),
 }
 
 impl Parser {
@@ -26,11 +27,12 @@ impl Parser {
         match self.lexer.get_next_token() {
             Ok(()) => (),
             Err(e) => {
-                error!(
+                let msg = format!(
                     "Error received while getting next token from lexer: {:?}",
                     e
                 );
-                return Err(ParserErr::LexerErr);
+                error!("{}", msg);
+                return Err(ParserErr::LexerErr(msg));
             }
         }
         Ok(())
@@ -42,11 +44,12 @@ impl Parser {
                 return Ok(v);
             }
             Err(e) => {
-                error!(
+                let msg = format!(
                     "Error received while peeking next token from lexer: {:?}",
                     e
                 );
-                return Err(ParserErr::LexerErr);
+                error!("{}", msg);
+                return Err(ParserErr::LexerErr(msg));
             }
         }
     }
@@ -86,11 +89,12 @@ impl Parser {
                     "y" => ind = 1,
                     "z" => ind = 2,
                     _ => {
-                        error!(
+                        let msg = format!(
                             "Received unknown token content {}",
                             self.lexer.curr_tok.token_content
                         );
-                        return Err(ParserErr::UnexpectedToken);
+                        error!("{}", msg);
+                        return Err(ParserErr::UnexpectedToken(msg));
                     }
                 }
                 self.get_next_token()?;
@@ -100,11 +104,12 @@ impl Parser {
                     self.get_next_token()?;
                     // get number
                     if self.lexer.curr_tok.token_type != TokType::Number {
-                        error!(
+                        let msg = format!(
                             "Expected number after ^, found {:?}",
                             self.lexer.curr_tok.token_type
                         );
-                        return Err(ParserErr::ExpectedToken);
+                        error!("{}", msg);
+                        return Err(ParserErr::ExpectedToken(msg));
                     }
                     exponent = self.lexer.curr_tok.token_content.parse::<i32>().unwrap();
                     self.get_next_token()?;
@@ -195,8 +200,9 @@ impl Parser {
                 if self.lexer.curr_tok.token_type == TokType::Rpar {
                     self.get_next_token()?;
                 } else {
-                    error!("Expected closing parenthesis at end of expression");
-                    return Err(ParserErr::ExpectedToken);
+                    let msg = String::from("Expected closing parenthesis at end of expression");
+                    error!("{}", msg);
+                    return Err(ParserErr::ExpectedToken(msg));
                 }
                 // Check for exponent on closing parenthesis
                 if self.lexer.curr_tok.token_type == TokType::Caret {
@@ -206,8 +212,12 @@ impl Parser {
                         let exponent = self.lexer.curr_tok.token_content.parse::<i32>().unwrap();
                         polynomial = Ok(inner.pow(exponent));
                     } else {
-                        error!("Expected number after caret");
-                        return Err(ParserErr::ExpectedToken);
+                        let msg = format!(
+                            "Expected number after caret, received {:?}",
+                            self.lexer.curr_tok.token_type
+                        );
+                        error!("{}", msg);
+                        return Err(ParserErr::ExpectedToken(msg));
                     }
                 } else {
                     polynomial = Ok(inner);
@@ -220,8 +230,12 @@ impl Parser {
                     inner.scale(-1.0);
                     polynomial = Ok(inner);
                 } else {
-                    error!("Unexpected Lpar received");
-                    return Err(ParserErr::UnexpectedToken);
+                    let msg = format!(
+                        "Unexpected token received {:?}",
+                        self.lexer.curr_tok.token_type
+                    );
+                    error!("{}", msg);
+                    return Err(ParserErr::UnexpectedToken(msg));
                 }
             }
             _ => {
@@ -292,12 +306,46 @@ impl Parser {
 
     pub fn start_parser(&mut self) -> Result<Polynomial, ParserErr> {
         let now = Instant::now();
-        let polynomial = self.parse_poly_expr();
-
+        let parser_res = self.parse_poly_expr();
         let elapsed = now.elapsed();
         info!("Parsed {:?} in {:.5?}", self.lexer.current_line, elapsed);
+        self.handle_parser_error(&parser_res);
+        parser_res
+    }
 
-        polynomial
+    pub fn handle_parser_error(&self, parser_res: &Result<Polynomial, ParserErr>) -> bool {
+        if parser_res.is_ok() {
+            return true;
+        }
+
+        let curr_line: String = self.lexer.current_line.iter().collect();
+        match parser_res {
+            Err(ParserErr::ExpectedToken(msg)) => {
+                println!("\t{}", curr_line);
+                println!("\t{: <1$}^", "", self.lexer.curr_pos);
+                println!("SyntaxError: {}", msg);
+            }
+            Err(ParserErr::UnexpectedToken(msg)) => {
+                println!("\t{}", curr_line);
+                println!("\t{: <1$}^", "", self.lexer.curr_pos);
+                println!("SyntaxError: {}", msg);
+            }
+            Err(ParserErr::LexerErr(msg)) => {
+                println!("\t{}", curr_line);
+                println!("\t{: <1$}^", "", self.lexer.curr_pos);
+                println!("SyntaxError: {}", msg);
+            }
+            _ => {
+                error!("Error handling not implemented for {:?}", parser_res);
+            }
+        }
+
+        if self.lexer.curr_tok.token_type != TokType::End {
+            println!("\t{}", curr_line);
+            println!("\t{: <1$}^", "", self.lexer.curr_pos);
+            println!("SyntaxError: Invalid syntax");
+        }
+        return false;
     }
 }
 
