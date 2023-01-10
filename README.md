@@ -7,7 +7,7 @@ Well actually, this is a combination of two projects: A polynomial library for R
 The goal is to extend this to infinite series over arbitrary fields, create an interpreter using the parser, and then write programs to mess around with infinite series.
 
 ## Example
-```
+```rust
 extern crate polynomial;
 pub use polynomial::Polynomial;
 
