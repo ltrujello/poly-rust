@@ -4,7 +4,7 @@ use crate::polynomial::Polynomial;
 use std::time::Instant;
 
 pub struct Parser {
-    lexer: Lexer,
+    pub lexer: Lexer,
 }
 
 #[derive(Debug, PartialEq)]
@@ -310,46 +310,16 @@ impl Parser {
         let elapsed = now.elapsed();
         info!("Parsed {:?} in {:.5?}", self.lexer.current_line, elapsed);
 
-        if self.lexer.curr_tok.token_type != TokType::End {
+        if self.lexer.curr_tok.token_type != TokType::End
+            && self.lexer.curr_tok.token_type != TokType::Newl
+        {
+            error!("{:?}", self.lexer.curr_tok.token_type);
             parser_res = Err(ParserErr::InvalidSyntax(
                 "SyntaxError: Invalid syntax".to_string(),
             ));
         }
-        self.handle_parser_error(&parser_res);
         parser_res
     }
-
-    pub fn handle_parser_error(&self, parser_res: &Result<Polynomial, ParserErr>) -> bool {
-        if parser_res.is_ok() {
-            return true;
-        }
-
-        let curr_line: String = self.lexer.current_line.iter().collect();
-        match parser_res {
-            Err(ParserErr::ExpectedToken(msg)) => {
-                print_syntax_error(curr_line, self.lexer.curr_pos, msg);
-            }
-            Err(ParserErr::UnexpectedToken(msg)) => {
-                print_syntax_error(curr_line, self.lexer.curr_pos, msg);
-            }
-            Err(ParserErr::LexerErr(msg)) => {
-                print_syntax_error(curr_line, self.lexer.curr_pos, msg);
-            }
-            Err(ParserErr::InvalidSyntax(msg)) => {
-                print_syntax_error(curr_line, self.lexer.curr_pos, msg);
-            }
-            _ => {
-                error!("Error handling not implemented for {:?}", parser_res);
-            }
-        }
-        false
-    }
-}
-
-fn print_syntax_error(offending_line: String, curr_pos: usize, msg: &str) {
-    println!("\t{}", offending_line);
-    println!("\t{: <1$}^", "", curr_pos);
-    println!("SyntaxError: {}", msg);
 }
 
 #[cfg(test)]
