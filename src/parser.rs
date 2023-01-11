@@ -7,7 +7,7 @@ pub struct Parser {
     lexer: Lexer,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum ParserErr {
     ExpectedToken(String),
     UnexpectedToken(String),
@@ -306,9 +306,15 @@ impl Parser {
 
     pub fn start_parser(&mut self) -> Result<Polynomial, ParserErr> {
         let now = Instant::now();
-        let parser_res = self.parse_poly_expr();
+        let mut parser_res = self.parse_poly_expr();
         let elapsed = now.elapsed();
         info!("Parsed {:?} in {:.5?}", self.lexer.current_line, elapsed);
+
+        if self.lexer.curr_tok.token_type != TokType::End {
+            parser_res = Err(ParserErr::InvalidSyntax(
+                "SyntaxError: Invalid syntax".to_string(),
+            ));
+        }
         self.handle_parser_error(&parser_res);
         parser_res
     }
@@ -321,32 +327,29 @@ impl Parser {
         let curr_line: String = self.lexer.current_line.iter().collect();
         match parser_res {
             Err(ParserErr::ExpectedToken(msg)) => {
-                println!("\t{}", curr_line);
-                println!("\t{: <1$}^", "", self.lexer.curr_pos);
-                println!("SyntaxError: {}", msg);
+                print_syntax_error(curr_line, self.lexer.curr_pos, msg);
             }
             Err(ParserErr::UnexpectedToken(msg)) => {
-                println!("\t{}", curr_line);
-                println!("\t{: <1$}^", "", self.lexer.curr_pos);
-                println!("SyntaxError: {}", msg);
+                print_syntax_error(curr_line, self.lexer.curr_pos, msg);
             }
             Err(ParserErr::LexerErr(msg)) => {
-                println!("\t{}", curr_line);
-                println!("\t{: <1$}^", "", self.lexer.curr_pos);
-                println!("SyntaxError: {}", msg);
+                print_syntax_error(curr_line, self.lexer.curr_pos, msg);
+            }
+            Err(ParserErr::InvalidSyntax(msg)) => {
+                print_syntax_error(curr_line, self.lexer.curr_pos, msg);
             }
             _ => {
                 error!("Error handling not implemented for {:?}", parser_res);
             }
         }
-
-        if self.lexer.curr_tok.token_type != TokType::End {
-            println!("\t{}", curr_line);
-            println!("\t{: <1$}^", "", self.lexer.curr_pos);
-            println!("SyntaxError: Invalid syntax");
-        }
-        return false;
+        false
     }
+}
+
+fn print_syntax_error(offending_line: String, curr_pos: usize, msg: &str) {
+    println!("\t{}", offending_line);
+    println!("\t{: <1$}^", "", curr_pos);
+    println!("SyntaxError: {}", msg);
 }
 
 #[cfg(test)]
@@ -769,6 +772,34 @@ mod tests {
         match polynomial {
             Ok(v) => assert_eq!(v.expr(), "x^2 + 5x + 6"),
             Err(e) => assert!(false, "{:?}", e),
+        }
+    }
+
+    #[rstest]
+    fn test_invalid_syntax_a() {
+        let mut parser = Parser::parser_init(String::from("(x + 2)5"));
+        let polynomial = parser.start_parser();
+        match polynomial {
+            Ok(v) => assert!(false, "{:?}", v),
+            Err(e) => assert_eq!(
+                ParserErr::InvalidSyntax(String::from("SyntaxError: Invalid syntax")),
+                e
+            ),
+        }
+    }
+
+    #[rstest]
+    fn test_invalid_syntax_b() {
+        let mut parser = Parser::parser_init(String::from("(x + 5"));
+        let polynomial = parser.start_parser();
+        match polynomial {
+            Ok(v) => assert!(false, "{:?}", v),
+            Err(e) => assert_eq!(
+                ParserErr::ExpectedToken(String::from(
+                    "Expected closing parenthesis at end of expression"
+                )),
+                e
+            ),
         }
     }
     // Valid expressions
