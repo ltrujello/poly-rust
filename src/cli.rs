@@ -46,6 +46,10 @@ pub fn handle_parser_error(offending_line: String, curr_pos: usize, parser_res: 
 fn print_syntax_error(offending_line: String, curr_pos: usize, msg: &str) {
     print!("  {}", offending_line);
     io::stdout().flush().unwrap();
-    println!("  {: <1$}^", "", curr_pos);
+    if curr_pos > 0 {
+        println!("  {: <1$}^", "", curr_pos - 1);
+    } else {
+        println!("  {: <1$}^", "", curr_pos);
+    }
     println!("\x1B[31mSyntaxError: {}\x1B[0m", msg);
 }

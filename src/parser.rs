@@ -1,6 +1,7 @@
 use crate::lexer::{Lexer, TokType, Token};
 use crate::monomial::Monomial;
 use crate::polynomial::Polynomial;
+use std::mem;
 use std::time::Instant;
 
 pub struct Parser {
@@ -139,6 +140,16 @@ impl Parser {
     pub fn parse_polynomial(&mut self) -> Result<Polynomial, ParserErr> {
         let now = Instant::now();
         let mut polynomial = Polynomial::new();
+        // Get the first term
+        match self.lexer.curr_tok.token_type {
+            TokType::Number | TokType::Xvar => {
+                let monomial_res = self.parse_monomial()?;
+                polynomial += monomial_res;
+            }
+            _ => {
+                return Err(ParserErr::InvalidSyntax(String::from("Invalid Syntax")));
+            }
+        }
         loop {
             match self.lexer.curr_tok.token_type {
                 TokType::Minus => {
@@ -173,15 +184,12 @@ impl Parser {
                         break;
                     }
                 }
-                TokType::Number | TokType::Xvar => {
-                    let monomial_res = self.parse_monomial()?;
-                    polynomial += monomial_res;
-                }
                 _ => break,
             }
         }
         let elapsed = now.elapsed();
-        debug!("Parsed {:?} in {:.5?}", self.lexer.current_line, elapsed);
+        let line: String = self.lexer.current_line.iter().collect();
+        debug!("Parsed {:?} in {:.5?}", line, elapsed);
 
         Ok(polynomial)
     }
@@ -306,17 +314,25 @@ impl Parser {
 
     pub fn start_parser(&mut self) -> Result<Polynomial, ParserErr> {
         let now = Instant::now();
+        // Check for empty input
+        while self.lexer.curr_tok.token_type == TokType::Newl {
+            self.get_next_token()?
+        }
+        if self.lexer.curr_tok.token_type == TokType::End {
+            return Ok(Polynomial::new());
+        }
+
         let mut parser_res = self.parse_poly_expr();
         let elapsed = now.elapsed();
-        info!("Parsed {:?} in {:.5?}", self.lexer.current_line, elapsed);
+
+        let line: String = self.lexer.current_line.iter().collect();
+        info!("Parsed {:?} in {:.5?}", line, elapsed);
 
         if self.lexer.curr_tok.token_type != TokType::End
             && self.lexer.curr_tok.token_type != TokType::Newl
         {
             error!("{:?}", self.lexer.curr_tok.token_type);
-            parser_res = Err(ParserErr::InvalidSyntax(
-                "SyntaxError: Invalid syntax".to_string(),
-            ));
+            parser_res = Err(ParserErr::InvalidSyntax("Invalid syntax".to_string()));
         }
         parser_res
     }
@@ -411,6 +427,32 @@ mod tests {
 
         assert_eq!(polynomial.monomials.len(), 1);
         assert_eq!(polynomial.monomials[0].coefficient, 9.5);
+    }
+
+    #[rstest]
+    fn parse_polynomial_error_a() {
+        let mut parser = Parser::parser_init(String::from("+ y + z"));
+        let res = parser.parse_polynomial();
+        match res {
+            Ok(_) => assert!(false),
+            Err(e) => assert_eq!(
+                mem::discriminant(&e),
+                mem::discriminant(&ParserErr::InvalidSyntax(String::from("")))
+            ),
+        }
+    }
+
+    #[rstest]
+    fn parse_polynomial_error_b() {
+        let mut parser = Parser::parser_init(String::from("- y + z"));
+        let res = parser.parse_polynomial();
+        match res {
+            Ok(_) => assert!(false),
+            Err(e) => assert_eq!(
+                mem::discriminant(&e),
+                mem::discriminant(&ParserErr::InvalidSyntax(String::from("")))
+            ),
+        }
     }
 
     #[rstest]
@@ -751,10 +793,7 @@ mod tests {
         let polynomial = parser.start_parser();
         match polynomial {
             Ok(v) => assert!(false, "{:?}", v),
-            Err(e) => assert_eq!(
-                ParserErr::InvalidSyntax(String::from("SyntaxError: Invalid syntax")),
-                e
-            ),
+            Err(e) => assert_eq!(ParserErr::InvalidSyntax(String::from("Invalid syntax")), e),
         }
     }
 
@@ -770,6 +809,46 @@ mod tests {
                 )),
                 e
             ),
+        }
+    }
+
+    #[rstest]
+    fn test_parser_empty_input() {
+        let mut parser = Parser::parser_init(String::from(""));
+        let polynomial = parser.start_parser();
+        match polynomial {
+            Ok(v) => assert!(true),
+            Err(e) => assert!(false, "{:?}", e),
+        }
+    }
+
+    #[rstest]
+    fn test_parser_input_space() {
+        let mut parser = Parser::parser_init(String::from(" "));
+        let polynomial = parser.start_parser();
+        match polynomial {
+            Ok(v) => assert!(true),
+            Err(e) => assert!(false, "{:?}", e),
+        }
+    }
+
+    #[rstest]
+    fn test_parser_input_new_line() {
+        let mut parser = Parser::parser_init(String::from("\n"));
+        let polynomial = parser.start_parser();
+        match polynomial {
+            Ok(v) => assert!(true),
+            Err(e) => assert!(false, "{:?}", e),
+        }
+    }
+    
+    #[rstest]
+    fn test_parser_input_space_and_new_line() {
+        let mut parser = Parser::parser_init(String::from("   \n"));
+        let polynomial = parser.start_parser();
+        match polynomial {
+            Ok(v) => assert!(true),
+            Err(e) => assert!(false, "{:?}", e),
         }
     }
     // Valid expressions
