@@ -126,6 +126,12 @@ impl Lexer {
             ch = self.march_pos()?;
         }
 
+        if self.curr_pos == self.line_size {
+            self.curr_tok.token_type = TokType::End;
+            debug!("No more input, returning tok {:?}", TokType::End);
+            return Ok(());
+        }
+
         match ch {
             '\n' => self.curr_tok.token_type = TokType::Newl,
             '*' => self.curr_tok.token_type = TokType::Mul,

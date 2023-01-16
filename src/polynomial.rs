@@ -82,7 +82,7 @@ impl Polynomial {
     }
 
     pub fn from(expr: &str) -> Result<Polynomial, ParserErr> {
-        let mut parser = Parser::parser_init(String::from(expr));
+        let mut parser = Parser::parser_init(String::from(expr))?;
         let polynomial = parser.parse_polynomial()?;
         Ok(polynomial)
     }
