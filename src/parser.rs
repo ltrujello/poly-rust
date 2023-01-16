@@ -17,11 +17,11 @@ pub enum ParserErr {
 }
 
 impl Parser {
-    pub fn parser_init(current_line: String) -> Self {
+    pub fn parser_init(current_line: String) -> Result<Self, ParserErr> {
         let lexer = Lexer::lexer_init(current_line);
         let mut parser = Parser { lexer: lexer };
-        parser.get_next_token().unwrap();
-        parser
+        parser.get_next_token()?;
+        Ok(parser)
     }
 
     pub fn get_next_token(&mut self) -> Result<(), ParserErr> {
@@ -345,21 +345,21 @@ mod tests {
 
     #[rstest]
     fn parser_monomial_degree_one() {
-        let mut parser = Parser::parser_init(String::from("x\n"));
+        let mut parser = Parser::parser_init(String::from("x\n")).unwrap();
         let mut monomial = parser.parse_monomial().unwrap();
 
         assert_eq!(monomial.coefficient, 1.0);
         assert_eq!(monomial.power(0), 1);
         assert_eq!(monomial.degree(), 1);
 
-        parser = Parser::parser_init(String::from("y\n"));
+        parser = Parser::parser_init(String::from("y\n")).unwrap();
         monomial = parser.parse_monomial().unwrap();
 
         assert_eq!(monomial.coefficient, 1.0);
         assert_eq!(monomial.power(1), 1);
         assert_eq!(monomial.degree(), 1);
 
-        parser = Parser::parser_init(String::from("z\n"));
+        parser = Parser::parser_init(String::from("z\n")).unwrap();
         monomial = parser.parse_monomial().unwrap();
 
         assert_eq!(monomial.coefficient, 1.0);
@@ -369,7 +369,7 @@ mod tests {
 
     #[rstest]
     fn parser_monomial_multivariate() {
-        let mut parser = Parser::parser_init(String::from("xyz\n"));
+        let mut parser = Parser::parser_init(String::from("xyz\n")).unwrap();
         let monomial = parser.parse_monomial().unwrap();
         assert_eq!(monomial.coefficient, 1.0);
         assert_eq!(monomial.power(0), 1);
@@ -380,7 +380,7 @@ mod tests {
 
     #[rstest]
     fn parser_monomial_multivariate_2() {
-        let mut parser = Parser::parser_init(String::from("3.5x^2yz^5\n"));
+        let mut parser = Parser::parser_init(String::from("3.5x^2yz^5\n")).unwrap();
         let monomial = parser.parse_monomial().unwrap();
 
         assert_eq!(monomial.coefficient, 3.5);
@@ -392,7 +392,8 @@ mod tests {
 
     #[rstest]
     fn parse_polynomial_simple() {
-        let mut parser = Parser::parser_init(String::from("2x + y + z + 2x + y + y + y + z\n"));
+        let mut parser =
+            Parser::parser_init(String::from("2x + y + z + 2x + y + y + y + z\n")).unwrap();
         let polynomial = parser.parse_polynomial().unwrap();
 
         assert_eq!(polynomial.monomials.len(), 3);
@@ -400,7 +401,7 @@ mod tests {
 
     #[rstest]
     fn parse_polynomial_multivariate_a() {
-        let mut parser = Parser::parser_init(String::from("2xyz + yzx + zxy + xy \n"));
+        let mut parser = Parser::parser_init(String::from("2xyz + yzx + zxy + xy \n")).unwrap();
         let polynomial = parser.parse_polynomial().unwrap();
 
         assert_eq!(polynomial.monomials.len(), 2);
@@ -411,7 +412,7 @@ mod tests {
     #[rstest]
     fn parse_polynomial_multivariate_b() {
         let mut parser =
-            Parser::parser_init(String::from("2xyz + zyx+ zy + 2x + zy + x + yzx + yz\n"));
+            Parser::parser_init(String::from("2xyz + zyx+ zy + 2x + zy + x + yzx + yz\n")).unwrap();
         let polynomial = parser.parse_polynomial().unwrap();
 
         assert_eq!(polynomial.monomials.len(), 3);
@@ -422,7 +423,7 @@ mod tests {
 
     #[rstest]
     fn parse_polynomial_numbers_only() {
-        let mut parser = Parser::parser_init(String::from("2 + 3 + 4.5\n"));
+        let mut parser = Parser::parser_init(String::from("2 + 3 + 4.5\n")).unwrap();
         let polynomial = parser.parse_polynomial().unwrap();
 
         assert_eq!(polynomial.monomials.len(), 1);
@@ -431,7 +432,7 @@ mod tests {
 
     #[rstest]
     fn parse_polynomial_error_a() {
-        let mut parser = Parser::parser_init(String::from("+ y + z"));
+        let mut parser = Parser::parser_init(String::from("+ y + z")).unwrap();
         let res = parser.parse_polynomial();
         match res {
             Ok(_) => assert!(false),
@@ -444,7 +445,7 @@ mod tests {
 
     #[rstest]
     fn parse_polynomial_error_b() {
-        let mut parser = Parser::parser_init(String::from("- y + z"));
+        let mut parser = Parser::parser_init(String::from("- y + z")).unwrap();
         let res = parser.parse_polynomial();
         match res {
             Ok(_) => assert!(false),
@@ -457,7 +458,7 @@ mod tests {
 
     #[rstest]
     fn parse_polynomial_expr_mulitplication_a() {
-        let mut parser = Parser::parser_init(String::from("(x + y) * (x + y)"));
+        let mut parser = Parser::parser_init(String::from("(x + y) * (x + y)")).unwrap();
         let polynomial = parser.start_parser();
         match polynomial {
             Ok(v) => assert_eq!(v.expr(), "x^2 + 2xy + y^2"),
@@ -467,7 +468,8 @@ mod tests {
 
     #[rstest]
     fn parse_polynomial_expr_mulitplication_b() {
-        let mut parser = Parser::parser_init(String::from("(((x + y) * (x + y))) * (x + y)"));
+        let mut parser =
+            Parser::parser_init(String::from("(((x + y) * (x + y))) * (x + y)")).unwrap();
         let polynomial = parser.start_parser();
         match polynomial {
             Ok(v) => assert_eq!(v.expr(), "x^3 + 3x^2y + 3xy^2 + y^3"),
@@ -477,7 +479,8 @@ mod tests {
 
     #[rstest]
     fn parse_polynomial_expr_mulitplication_c() {
-        let mut parser = Parser::parser_init(String::from("(x^4 + 1) * ((x^3 + 2x) * (x + 1))"));
+        let mut parser =
+            Parser::parser_init(String::from("(x^4 + 1) * ((x^3 + 2x) * (x + 1))")).unwrap();
         let polynomial = parser.start_parser();
         match polynomial {
             Ok(v) => assert_eq!(v.expr(), "x^8 + x^7 + 2x^6 + 2x^5 + x^4 + x^3 + 2x^2 + 2x"),
@@ -489,7 +492,8 @@ mod tests {
     fn parse_polynomial_expr_mulitplication_d() {
         let mut parser = Parser::parser_init(String::from(
             "(((x + y + z)*(x + y + z))*(x + y + z))*(x + y + z)",
-        ));
+        ))
+        .unwrap();
         let polynomial = parser.start_parser();
         match polynomial {
             Ok(v) => assert_eq!(v.expr(), "x^4 + 4x^3y + 4x^3z + 6x^2y^2 + 12x^2yz + 6x^2z^2 + 4xy^3 + 12xy^2z + 12xyz^2 + 4xz^3 + y^4 + 4y^3z + 6y^2z^2 + 4yz^3 + z^4"),
@@ -499,7 +503,8 @@ mod tests {
 
     #[rstest]
     fn parse_polynomial_expr_mulitplication_negative_a() {
-        let mut parser = Parser::parser_init(String::from("((x - y) * (x + y)) * (x + y)"));
+        let mut parser =
+            Parser::parser_init(String::from("((x - y) * (x + y)) * (x + y)")).unwrap();
         let polynomial = parser.start_parser();
         match polynomial {
             Ok(v) => assert_eq!(v.expr(), "x^3 + x^2y - xy^2 - y^3"),
@@ -510,7 +515,7 @@ mod tests {
     #[rstest]
     fn parse_polynomial_expr_mulitplication_negative_b() {
         let mut parser =
-            Parser::parser_init(String::from("(((x - y) * (x + y)) * (x + y)) * (x + y)"));
+            Parser::parser_init(String::from("(((x - y) * (x + y)) * (x + y)) * (x + y)")).unwrap();
         let polynomial = parser.start_parser();
         match polynomial {
             Ok(v) => assert_eq!(v.expr(), "x^4 + 2x^3y - 2xy^3 - y^4"),
@@ -520,7 +525,7 @@ mod tests {
 
     #[rstest]
     fn parse_polynomial_expr_parentheses() {
-        let mut parser = Parser::parser_init(String::from("(((x + y)))"));
+        let mut parser = Parser::parser_init(String::from("(((x + y)))")).unwrap();
         let polynomial = parser.start_parser();
         match polynomial {
             Ok(v) => assert_eq!(v.expr(), "x + y"),
@@ -530,7 +535,7 @@ mod tests {
 
     #[rstest]
     fn parse_polynomial_addition_and_multiplication() {
-        let mut parser = Parser::parser_init(String::from("x^3 + x^2 + (x + 5)*(x - 7)"));
+        let mut parser = Parser::parser_init(String::from("x^3 + x^2 + (x + 5)*(x - 7)")).unwrap();
         let polynomial = parser.start_parser();
         match polynomial {
             Ok(v) => assert_eq!(v.expr(), "x^3 + 2x^2 - 2x - 35"),
@@ -540,7 +545,7 @@ mod tests {
 
     #[rstest]
     fn parse_polynomial_subtraction_and_multiplication_a() {
-        let mut parser = Parser::parser_init(String::from("x^3 - x^2 + (x + 5)*(x - 7)"));
+        let mut parser = Parser::parser_init(String::from("x^3 - x^2 + (x + 5)*(x - 7)")).unwrap();
         let polynomial = parser.start_parser();
         match polynomial {
             Ok(v) => assert_eq!(v.expr(), "x^3 - 2x - 35"),
@@ -550,7 +555,7 @@ mod tests {
 
     #[rstest]
     fn parse_polynomial_subtraction_and_multiplication_b() {
-        let mut parser = Parser::parser_init(String::from("x^3 - x^2 - (x + 5)*(x - 7)"));
+        let mut parser = Parser::parser_init(String::from("x^3 - x^2 - (x + 5)*(x - 7)")).unwrap();
         let polynomial = parser.start_parser();
         match polynomial {
             Ok(v) => assert_eq!(v.expr(), "x^3 - 2x^2 + 2x + 35"),
@@ -560,7 +565,7 @@ mod tests {
 
     #[rstest]
     fn parse_polynomial_repeated_multiplication_linear_factors() {
-        let mut parser = Parser::parser_init(String::from("(x + 5)*(x - 7)*(x - 4)"));
+        let mut parser = Parser::parser_init(String::from("(x + 5)*(x - 7)*(x - 4)")).unwrap();
         let polynomial = parser.start_parser();
         match polynomial {
             Ok(v) => assert_eq!(v.expr(), "x^3 - 6x^2 - 27x + 140"),
@@ -570,7 +575,8 @@ mod tests {
 
     #[rstest]
     fn parse_polynomial_repeated_multiplication_a() {
-        let mut parser = Parser::parser_init(String::from("x^4 + x^3 + (x + 5)*(x - 7)*(x - 4)"));
+        let mut parser =
+            Parser::parser_init(String::from("x^4 + x^3 + (x + 5)*(x - 7)*(x - 4)")).unwrap();
         let polynomial = parser.start_parser();
         match polynomial {
             Ok(v) => assert_eq!(v.expr(), "x^4 + 2x^3 - 6x^2 - 27x + 140"),
@@ -582,7 +588,8 @@ mod tests {
     fn parse_polynomial_repeated_multiplication_b() {
         let mut parser = Parser::parser_init(String::from(
             "(x + 5)*(x - 7)*(x - 4) + (x + 5)*(x - 7)*(x - 4)",
-        ));
+        ))
+        .unwrap();
         let polynomial = parser.start_parser();
         match polynomial {
             Ok(v) => assert_eq!(v.expr(), "2x^3 - 12x^2 - 54x + 280"),
@@ -592,7 +599,8 @@ mod tests {
 
     #[rstest]
     fn parse_polynomial_repeated_multiplication_quadratic_factor() {
-        let mut parser = Parser::parser_init(String::from("(2x + 10)*(x - 7)*(x^2 + x + 1)"));
+        let mut parser =
+            Parser::parser_init(String::from("(2x + 10)*(x - 7)*(x^2 + x + 1)")).unwrap();
         let polynomial = parser.start_parser();
         match polynomial {
             Ok(v) => assert_eq!(v.expr(), "2x^4 - 2x^3 - 72x^2 - 74x - 70"),
@@ -602,7 +610,8 @@ mod tests {
 
     #[rstest]
     fn parse_polynomial_repeated_multiplication_multivariate_factor_a() {
-        let mut parser = Parser::parser_init(String::from("(2x + 10)*(x - 7)*(x^2 + y + z + 1)"));
+        let mut parser =
+            Parser::parser_init(String::from("(2x + 10)*(x - 7)*(x^2 + y + z + 1)")).unwrap();
         let polynomial = parser.start_parser();
         match polynomial {
             Ok(v) => assert_eq!(
@@ -617,7 +626,8 @@ mod tests {
     fn parse_polynomial_repeated_multiplication_multivariate_factor_b() {
         let mut parser = Parser::parser_init(String::from(
             "(x^2 + y + z + 1)*(x - 7 + y)*(x^2 + y + z + 1)",
-        ));
+        ))
+        .unwrap();
         let polynomial = parser.start_parser();
         match polynomial {
             Ok(v) => assert_eq!(v.expr(), "x^5 + x^4y - 7x^4 + 2x^3y + 2x^3z + 2x^2y^2 + 2x^2yz + 2x^3 - 12x^2y - 14x^2z + xy^2 + 2xyz + xz^2 + y^3 + 2y^2z + yz^2 - 14x^2 + 2xy + 2xz - 5y^2 - 12yz - 7z^2 + x - 13y - 14z - 7"),
@@ -627,7 +637,7 @@ mod tests {
 
     #[rstest]
     fn parse_polynomial_exponentiation_a() {
-        let mut parser = Parser::parser_init(String::from("(x + 2)^3"));
+        let mut parser = Parser::parser_init(String::from("(x + 2)^3")).unwrap();
         let polynomial = parser.start_parser();
         match polynomial {
             Ok(v) => assert_eq!(v.expr(), "x^3 + 6x^2 + 12x + 8"),
@@ -637,7 +647,7 @@ mod tests {
 
     #[rstest]
     fn parse_polynomial_exponentiation_b() {
-        let mut parser = Parser::parser_init(String::from("(x + 3)^2*(x + 3)"));
+        let mut parser = Parser::parser_init(String::from("(x + 3)^2*(x + 3)")).unwrap();
         let polynomial = parser.start_parser();
         match polynomial {
             Ok(v) => assert_eq!(v.expr(), "x^3 + 9x^2 + 27x + 27"),
@@ -647,7 +657,7 @@ mod tests {
 
     #[rstest]
     fn parse_polynomial_exponentiation_multivariate() {
-        let mut parser = Parser::parser_init(String::from("(x + y + z)^5"));
+        let mut parser = Parser::parser_init(String::from("(x + y + z)^5")).unwrap();
         let polynomial = parser.start_parser();
         match polynomial {
             Ok(v) => assert_eq!(v.expr(), "x^5 + 5x^4y + 5x^4z + 10x^3y^2 + 20x^3yz + 10x^3z^2 + 10x^2y^3 + 30x^2y^2z + 30x^2yz^2 + 10x^2z^3 + 5xy^4 + 20xy^3z + 30xy^2z^2 + 20xyz^3 + 5xz^4 + y^5 + 5y^4z + 10y^3z^2 + 10y^2z^3 + 5yz^4 + z^5"),
@@ -657,7 +667,7 @@ mod tests {
 
     #[rstest]
     fn parse_polynomial_exponentiation_expression() {
-        let mut parser = Parser::parser_init(String::from("(x^2 + (x + 2)*(x + 2))^2"));
+        let mut parser = Parser::parser_init(String::from("(x^2 + (x + 2)*(x + 2))^2")).unwrap();
         let polynomial = parser.start_parser();
         match polynomial {
             Ok(v) => assert_eq!(v.expr(), "4x^4 + 16x^3 + 32x^2 + 32x + 16"),
@@ -667,7 +677,7 @@ mod tests {
 
     #[rstest]
     fn parse_polynomial_repeated_addition_a() {
-        let mut parser = Parser::parser_init(String::from("x^3 + (x^3) + x^3 "));
+        let mut parser = Parser::parser_init(String::from("x^3 + (x^3) + x^3 ")).unwrap();
         let polynomial = parser.start_parser();
         match polynomial {
             Ok(v) => assert_eq!(v.expr(), "3x^3"),
@@ -677,7 +687,7 @@ mod tests {
 
     #[rstest]
     fn parse_polynomial_repeated_addition_b() {
-        let mut parser = Parser::parser_init(String::from("x^3 + (x + 3)*(x + 3) + x^2"));
+        let mut parser = Parser::parser_init(String::from("x^3 + (x + 3)*(x + 3) + x^2")).unwrap();
         let polynomial = parser.start_parser();
         match polynomial {
             Ok(v) => assert_eq!(v.expr(), "x^3 + 2x^2 + 6x + 9"),
@@ -687,7 +697,8 @@ mod tests {
 
     #[rstest]
     fn parse_polynomial_repeated_addition_c() {
-        let mut parser = Parser::parser_init(String::from("x^3 + (x + 5)^3*(x + 4) + x^3 "));
+        let mut parser =
+            Parser::parser_init(String::from("x^3 + (x + 5)^3*(x + 4) + x^3 ")).unwrap();
         let polynomial = parser.start_parser();
         match polynomial {
             Ok(v) => assert_eq!(v.expr(), "x^4 + 21x^3 + 135x^2 + 425x + 500"),
@@ -699,7 +710,8 @@ mod tests {
     fn parse_polynomial_repeated_addition_d() {
         let mut parser = Parser::parser_init(String::from(
             "x^3 + (x + 2)*(x + 2) + x^3 + (x + 2)*(x + 2) - x^3",
-        ));
+        ))
+        .unwrap();
         let polynomial = parser.start_parser();
         match polynomial {
             Ok(v) => assert_eq!(v.expr(), "x^3 + 2x^2 + 8x + 8"),
@@ -709,7 +721,7 @@ mod tests {
 
     #[rstest]
     fn parse_polynomial_repeated_addition_e() {
-        let mut parser = Parser::parser_init(String::from("x^3 + (x + 3)*(x + 3) - x^2"));
+        let mut parser = Parser::parser_init(String::from("x^3 + (x + 3)*(x + 3) - x^2")).unwrap();
         let polynomial = parser.start_parser();
         match polynomial {
             Ok(v) => assert_eq!(v.expr(), "x^3 + 6x + 9"),
@@ -719,7 +731,7 @@ mod tests {
 
     #[rstest]
     fn parse_polynomial_repeated_addition_f() {
-        let mut parser = Parser::parser_init(String::from("x^3 - (x^3) - x^3 "));
+        let mut parser = Parser::parser_init(String::from("x^3 - (x^3) - x^3 ")).unwrap();
         let polynomial = parser.start_parser();
         match polynomial {
             Ok(v) => assert_eq!(v.expr(), "-x^3"),
@@ -729,7 +741,7 @@ mod tests {
 
     #[rstest]
     fn parse_polynomial_repeated_addition_g() {
-        let mut parser = Parser::parser_init(String::from("x^3 - (x + 3)*(x + 3) + x^2"));
+        let mut parser = Parser::parser_init(String::from("x^3 - (x + 3)*(x + 3) + x^2")).unwrap();
         let polynomial = parser.start_parser();
         match polynomial {
             Ok(v) => assert_eq!(v.expr(), "x^3 - 6x - 9"),
@@ -739,7 +751,7 @@ mod tests {
 
     #[rstest]
     fn parse_polynomial_distribute_negative_a() {
-        let mut parser = Parser::parser_init(String::from("-(x + y + z)"));
+        let mut parser = Parser::parser_init(String::from("-(x + y + z)")).unwrap();
         let polynomial = parser.start_parser();
         match polynomial {
             Ok(v) => assert_eq!(v.expr(), "-x - y - z"),
@@ -749,7 +761,7 @@ mod tests {
 
     #[rstest]
     fn parse_polynomial_distribute_negative_b() {
-        let mut parser = Parser::parser_init(String::from("-(x + 2)*(x + 2)"));
+        let mut parser = Parser::parser_init(String::from("-(x + 2)*(x + 2)")).unwrap();
         let polynomial = parser.start_parser();
         match polynomial {
             Ok(v) => assert_eq!(v.expr(), "-x^2 - 4x - 4"),
@@ -759,7 +771,8 @@ mod tests {
 
     #[rstest]
     fn parse_polynomial_distribute_negative_c() {
-        let mut parser = Parser::parser_init(String::from("-(x^3 - (x + 3)*(x + 3) + x^2)"));
+        let mut parser =
+            Parser::parser_init(String::from("-(x^3 - (x + 3)*(x + 3) + x^2)")).unwrap();
         let polynomial = parser.start_parser();
         match polynomial {
             Ok(v) => assert_eq!(v.expr(), "-x^3 + 6x + 9"),
@@ -769,7 +782,7 @@ mod tests {
 
     #[rstest]
     fn parse_polynomial_distribute_negative_d() {
-        let mut parser = Parser::parser_init(String::from("-(x + 2)*-(x + 2)*-(x + 2)"));
+        let mut parser = Parser::parser_init(String::from("-(x + 2)*-(x + 2)*-(x + 2)")).unwrap();
         let polynomial = parser.start_parser();
         match polynomial {
             Ok(v) => assert_eq!(v.expr(), "-x^3 - 6x^2 - 12x - 8"),
@@ -779,7 +792,7 @@ mod tests {
 
     #[rstest]
     fn parse_polynomial_distribute_negative_e() {
-        let mut parser = Parser::parser_init(String::from("-(x + 2)*-(x + 2) - -(x + 2)"));
+        let mut parser = Parser::parser_init(String::from("-(x + 2)*-(x + 2) - -(x + 2)")).unwrap();
         let polynomial = parser.start_parser();
         match polynomial {
             Ok(v) => assert_eq!(v.expr(), "x^2 + 5x + 6"),
@@ -789,7 +802,7 @@ mod tests {
 
     #[rstest]
     fn test_invalid_syntax_a() {
-        let mut parser = Parser::parser_init(String::from("(x + 2)5"));
+        let mut parser = Parser::parser_init(String::from("(x + 2)5")).unwrap();
         let polynomial = parser.start_parser();
         match polynomial {
             Ok(v) => assert!(false, "{:?}", v),
@@ -799,7 +812,7 @@ mod tests {
 
     #[rstest]
     fn test_invalid_syntax_b() {
-        let mut parser = Parser::parser_init(String::from("(x + 5"));
+        let mut parser = Parser::parser_init(String::from("(x + 5")).unwrap();
         let polynomial = parser.start_parser();
         match polynomial {
             Ok(v) => assert!(false, "{:?}", v),
@@ -814,7 +827,7 @@ mod tests {
 
     #[rstest]
     fn test_parser_empty_input() {
-        let mut parser = Parser::parser_init(String::from(""));
+        let mut parser = Parser::parser_init(String::from("")).unwrap();
         let polynomial = parser.start_parser();
         match polynomial {
             Ok(v) => assert!(true),
@@ -824,7 +837,7 @@ mod tests {
 
     #[rstest]
     fn test_parser_input_space() {
-        let mut parser = Parser::parser_init(String::from(" "));
+        let mut parser = Parser::parser_init(String::from(" ")).unwrap();
         let polynomial = parser.start_parser();
         match polynomial {
             Ok(v) => assert!(true),
@@ -834,17 +847,17 @@ mod tests {
 
     #[rstest]
     fn test_parser_input_new_line() {
-        let mut parser = Parser::parser_init(String::from("\n"));
+        let mut parser = Parser::parser_init(String::from("\n")).unwrap();
         let polynomial = parser.start_parser();
         match polynomial {
             Ok(v) => assert!(true),
             Err(e) => assert!(false, "{:?}", e),
         }
     }
-    
+
     #[rstest]
     fn test_parser_input_space_and_new_line() {
-        let mut parser = Parser::parser_init(String::from("   \n"));
+        let mut parser = Parser::parser_init(String::from("   \n")).unwrap();
         let polynomial = parser.start_parser();
         match polynomial {
             Ok(v) => assert!(true),

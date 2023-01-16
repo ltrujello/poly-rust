@@ -92,7 +92,7 @@ impl Monomial {
     }
 
     pub fn from(expr: &str) -> Result<Monomial, ParserErr> {
-        let mut parser = Parser::parser_init(String::from(expr));
+        let mut parser = Parser::parser_init(String::from(expr))?;
         let monomial = parser.parse_monomial()?;
         Ok(monomial)
     }

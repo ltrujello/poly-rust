@@ -8,18 +8,25 @@ pub fn run_cli() {
     loop {
         print!("~> ");
         io::stdout().flush().unwrap();
-        let mut buffer = String::new();
-        io::stdin().read_line(&mut buffer);
+        let mut input = String::new();
+        io::stdin().read_line(&mut input);
 
-        let mut parser = Parser::parser_init(buffer);
-        let res = parser.start_parser();
-        match res {
-            Ok(v) => {
-                println!("{}", v.expr());
+        let input_copy: String = input.clone();
+        let mut parser_res = Parser::parser_init(input);
+        match parser_res {
+            Ok(mut parser) => {
+                let res = parser.start_parser();
+                match res {
+                    Ok(v) => {
+                        println!("{}", v.expr());
+                    }
+                    Err(e) => {
+                        handle_parser_error(input_copy, parser.lexer.curr_pos, e);
+                    }
+                }
             }
             Err(e) => {
-                let offending_line: String = parser.lexer.current_line.iter().collect();
-                handle_parser_error(offending_line, parser.lexer.curr_pos, e);
+                handle_parser_error(input_copy, 0, e);
             }
         }
     }
