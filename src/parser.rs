@@ -831,7 +831,7 @@ mod tests {
         let mut parser = Parser::parser_init(String::from("")).unwrap();
         let polynomial = parser.start_parser();
         match polynomial {
-            Ok(v) => assert!(true),
+            Ok(v) => assert!(true, "{:?}", v),
             Err(e) => assert!(false, "{:?}", e),
         }
     }
@@ -841,7 +841,7 @@ mod tests {
         let mut parser = Parser::parser_init(String::from(" ")).unwrap();
         let polynomial = parser.start_parser();
         match polynomial {
-            Ok(v) => assert!(true),
+            Ok(v) => assert!(true, "{:?}", v),
             Err(e) => assert!(false, "{:?}", e),
         }
     }
@@ -851,7 +851,7 @@ mod tests {
         let mut parser = Parser::parser_init(String::from("\n")).unwrap();
         let polynomial = parser.start_parser();
         match polynomial {
-            Ok(v) => assert!(true),
+            Ok(v) => assert!(true, "{:?}", v),
             Err(e) => assert!(false, "{:?}", e),
         }
     }
@@ -861,7 +861,7 @@ mod tests {
         let mut parser = Parser::parser_init(String::from("   \n")).unwrap();
         let polynomial = parser.start_parser();
         match polynomial {
-            Ok(v) => assert!(true),
+            Ok(v) => assert!(true, "{:?}", v),
             Err(e) => assert!(false, "{:?}", e),
         }
     }
