@@ -1,7 +1,7 @@
 use crate::lexer::{Lexer, TokType, Token};
 use crate::monomial::Monomial;
 use crate::polynomial::Polynomial;
-use std::mem;
+use log::{debug, error, info};
 use std::time::Instant;
 
 pub struct Parser {
@@ -342,6 +342,7 @@ impl Parser {
 mod tests {
     use super::*;
     use rstest::*;
+    use std::mem;
 
     #[rstest]
     fn parser_monomial_degree_one() {

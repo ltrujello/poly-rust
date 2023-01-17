@@ -1,3 +1,5 @@
+use log::{debug, error};
+
 #[derive(PartialEq, Debug, Clone)]
 pub enum TokType {
     Exit,
@@ -186,25 +188,6 @@ impl Lexer {
         self.march_pos()?;
         Ok(())
     }
-}
-
-pub fn tokenize(mut lexer: Lexer) -> Result<(), LexerErr> {
-    let mut ind = 0;
-    lexer.get_next_token()?;
-    loop {
-        if lexer.curr_tok.token_type == TokType::Newl {
-            break;
-        }
-        if lexer.curr_tok.token_type == TokType::End {
-            break;
-        }
-        lexer.get_next_token()?;
-        ind += 1;
-        if ind > 100 {
-            break;
-        }
-    }
-    Ok(())
 }
 
 #[cfg(test)]
