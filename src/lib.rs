@@ -1,4 +1,5 @@
 mod lexer;
 mod monomial;
 pub mod parser;
-mod polynomial;
+pub mod polynomial;
+pub mod rational_polynomial;

@@ -4,35 +4,42 @@ use poly::parser::{Parser, ParserErr};
 use std::io;
 use std::io::Write;
 
+use poly::polynomial::Polynomial;
+use poly::rational_polynomial::RationalPoly;
 fn main() {
     env_logger::init();
     println!("\x1B[36m    ______\n   //   //   ____   //   \\\\ //\n  //___//  //  //  //     \\\\/\n //       //__//  //__    //\n//                       //\x1B[0m");
 
-    loop {
-        print!("~> ");
-        io::stdout().flush().unwrap();
-        let mut input = String::new();
-        io::stdin().read_line(&mut input).unwrap();
+    // loop {
+    //     print!("~> ");
+    //     io::stdout().flush().unwrap();
+    //     let mut input = String::new();
+    //     io::stdin().read_line(&mut input).unwrap();
 
-        let input_copy: String = input.clone();
-        let parser_res = Parser::parser_init(input);
-        match parser_res {
-            Ok(mut parser) => {
-                let res = parser.start_parser();
-                match res {
-                    Ok(v) => {
-                        println!("{}", v.expr());
-                    }
-                    Err(e) => {
-                        handle_parser_error(input_copy, parser.lexer.curr_pos, e);
-                    }
-                }
-            }
-            Err(e) => {
-                handle_parser_error(input_copy, 0, e);
-            }
-        }
-    }
+    //     let input_copy: String = input.clone();
+    //     let parser_res = Parser::parser_init(input);
+    //     match parser_res {
+    //         Ok(mut parser) => {
+    //             let res = parser.start_parser();
+    //             match res {
+    //                 Ok(v) => {
+    //                     println!("{}", v.expr());
+    //                 }
+    //                 Err(e) => {
+    //                     handle_parser_error(input_copy, parser.lexer.curr_pos, e);
+    //                 }
+    //             }
+    //         }
+    //         Err(e) => {
+    //             handle_parser_error(input_copy, 0, e);
+    //         }
+    //     }
+    // }
+    let numer = Polynomial::from("x^3 + x").unwrap();
+    let denom = Polynomial::from("x + 1").unwrap();
+
+    let rational = RationalPoly::new(numer, denom);
+    println!("{}", rational.expr());
 }
 
 pub fn handle_parser_error(offending_line: String, curr_pos: usize, parser_res: ParserErr) -> bool {
