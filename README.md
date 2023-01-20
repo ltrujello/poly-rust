@@ -17,3 +17,28 @@ println!("{}", polynomial.expr());
 x^4 + 2x^2y^2 + 2x^2z^2 + y^4 + 2y^2z^2 + z^4
 ```
 
+## Grammar
+The following grammar is used to create the set of acceptable polynomial expressions.
+```
+polyexpr -> polyexpr + term
+            | polyexpr - term
+            | term
+
+term -> term * factor 
+        | factor
+
+factor -> (polyexpr)
+        | -(polyexpr)
+        | polynomial
+        | (polyexpr)^n
+
+polynomial -> polynomial + monomial
+            | polynomial - monomial
+            | monomial
+
+monomial -> x^Int
+            | Float x^Int 
+            | Float x 
+            | x 
+            | Float 
+```
