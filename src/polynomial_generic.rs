@@ -4,7 +4,7 @@ use num;
 use std::clone::Clone;
 use std::ops;
 
-use crate::monomial_generic::Monomial_ as Monomial;
+use crate::monomial_generic::Monomial;
 use crate::CRing;
 
 pub type Polynomial32 = Polynomial<f32>;
@@ -150,7 +150,7 @@ impl<T> ops::SubAssign<Monomial<T>> for Polynomial<T>
 where
     T: CRing + Clone,
 {
-    fn sub_assign(&mut self, other: Monomial<T>) {
+    fn sub_assign(&mut self, mut other: Monomial<T>) {
         match self
             .monomials
             .binary_search_by(|monomial| monomial.cmp_terms(&other))
@@ -160,6 +160,9 @@ where
                     self.monomials[pos].coefficient.clone() - other.coefficient;
             }
             Err(pos) => {
+                let mut zero = other.coefficient.clone();
+                zero.set_zero();
+                other.coefficient = zero - other.coefficient.clone();
                 self.monomials.insert(pos, other);
             }
         }
@@ -179,14 +182,16 @@ where
 }
 
 // Polynomial -= Polynomial
-// impl<T> ops::SubAssign for Polynomial<T>
-// where T:CRing {
-//     fn sub_assign(&mut self, other: Self) {
-//         for monomial in other.monomials {
-//             *self -= monomial;
-//         }
-//     }
-// }
+impl<T> ops::SubAssign for Polynomial<T>
+where
+    T: CRing + Clone,
+{
+    fn sub_assign(&mut self, other: Self) {
+        for monomial in other.monomials {
+            *self -= monomial;
+        }
+    }
+}
 
 // Polynomial + Polynomial
 impl<T> ops::Add for Polynomial<T>
@@ -201,17 +206,18 @@ where
     }
 }
 
-// Polynomial - Polynomial
-// impl<T> ops::Sub for Polynomial<T>
-// where T: CRing + Clone
-// {
-//     type Output = Self;
-//     fn sub(self, other: Self) -> Self {
-//         let mut new_poly = self.clone();
-//         new_poly -= other;
-//         new_poly
-//     }
-// }
+//Polynomial - Polynomial
+impl<T> ops::Sub for Polynomial<T>
+where
+    T: CRing + Clone,
+{
+    type Output = Self;
+    fn sub(self, other: Self) -> Self {
+        let mut new_poly = self.clone();
+        new_poly -= other;
+        new_poly
+    }
+}
 
 // Polynomial + &Polynomial
 // impl<T> ops::Add<&Polynomial<T>> for Polynomial<T>
@@ -514,6 +520,52 @@ mod tests {
         assert_eq!(polynomial.monomials[1].expr().as_str(), "x^3");
         assert_eq!(polynomial.monomials[2].expr().as_str(), "2x^2");
         assert_eq!(polynomial.monomials[3].expr().as_str(), "x");
+    }
+
+    #[rstest]
+    fn test_subtraction_1(polynomial_a: Polynomial64, polynomial_b: Polynomial64) {
+        let polynomial = polynomial_a - polynomial_b;
+
+        assert_eq!(polynomial.monomials.len(), 2);
+        assert_eq!(polynomial.expr(), "5x^2 - y^2");
+        assert_eq!(polynomial.monomials[0].coefficient, 5.0);
+        assert_eq!(polynomial.monomials[1].coefficient, -1.0);
+        assert_eq!(polynomial.monomials[0].expr().as_str(), "5x^2");
+        assert_eq!(format!("{}", polynomial.monomials[1]), "-y^2");
+    }
+
+    #[rstest]
+    fn test_polynomial_subtraction_like_terms_a(
+        polynomial_c: Polynomial64,
+        polynomial_e: Polynomial64,
+    ) {
+        let mut polynomial = polynomial_c;
+        let other = polynomial_e;
+        polynomial -= other;
+
+        assert_eq!(polynomial.monomials.len(), 3);
+        assert_eq!(polynomial.expr(), "x^4 + x^3");
+        assert_eq!(polynomial.monomials[0].coefficient, 1.0);
+        assert_eq!(polynomial.monomials[1].coefficient, 1.0);
+        assert_eq!(polynomial.monomials[0].expr().as_str(), "x^4");
+        assert_eq!(polynomial.monomials[1].expr().as_str(), "x^3");
+    }
+
+    #[rstest]
+    fn test_polynomial_subtraction_like_terms_b(
+        polynomial_c: Polynomial64,
+        polynomial_d: Polynomial64,
+    ) {
+        let mut polynomial = polynomial_c.clone();
+        let other = polynomial_d.clone();
+        polynomial -= other;
+
+        assert_eq!(polynomial.monomials.len(), 4);
+        assert_eq!(polynomial.expr(), "x^3 - x");
+        assert_eq!(polynomial.monomials[1].coefficient, 1.0);
+        assert_eq!(polynomial.monomials[3].coefficient, -1.0);
+        assert_eq!(polynomial.monomials[1].expr().as_str(), "x^3");
+        assert_eq!(format!("{}", polynomial.monomials[3]), "-x");
     }
 
     #[rstest]

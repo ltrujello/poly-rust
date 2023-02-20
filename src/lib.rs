@@ -1,8 +1,8 @@
 mod lexer;
-mod monomial;
+// mod monomial;
 pub mod monomial_generic;
 pub mod parser;
-mod polynomial;
+// mod polynomial;
 pub mod polynomial_generic;
 
 use num::{One, Signed, Zero};

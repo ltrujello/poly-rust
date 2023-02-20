@@ -1,6 +1,6 @@
 use crate::lexer::{Lexer, TokType, Token};
-use crate::monomial::Monomial;
-use crate::polynomial::Polynomial;
+use crate::monomial_generic::Monomial64;
+use crate::polynomial_generic::Polynomial64;
 use log::{debug, error, info};
 use std::time::Instant;
 
@@ -55,7 +55,7 @@ impl Parser {
         }
     }
 
-    pub fn parse_monomial(&mut self) -> Result<Monomial, ParserErr> {
+    pub fn parse_monomial(&mut self) -> Result<Monomial64, ParserErr> {
         let now = Instant::now();
         let start_ind = self.lexer.curr_pos;
 
@@ -131,15 +131,15 @@ impl Parser {
             &self.lexer.current_line[start_ind..end_ind],
             elapsed
         );
-        Ok(Monomial {
+        Ok(Monomial64 {
             coefficient,
             power_list,
         })
     }
 
-    pub fn parse_polynomial(&mut self) -> Result<Polynomial, ParserErr> {
+    pub fn parse_polynomial(&mut self) -> Result<Polynomial64, ParserErr> {
         let now = Instant::now();
-        let mut polynomial = Polynomial::new();
+        let mut polynomial = Polynomial64::new();
         // Get the first term
         match self.lexer.curr_tok.token_type {
             TokType::Number | TokType::Xvar => {
@@ -159,7 +159,7 @@ impl Parser {
                     {
                         self.get_next_token()?;
                         let monomial_res = self.parse_monomial()?;
-                        polynomial += -1.0 * monomial_res;
+                        polynomial += monomial_res * -1.0;
                     } else {
                         info!(
                             "token is back to MINUS: {:?}",
@@ -194,12 +194,12 @@ impl Parser {
         Ok(polynomial)
     }
 
-    pub fn parse_factor_expr(&mut self) -> Result<Polynomial, ParserErr> {
+    pub fn parse_factor_expr(&mut self) -> Result<Polynomial64, ParserErr> {
         info!(
             "parse_factor_expr: recieved token {:?}",
             self.lexer.curr_tok.token_type
         );
-        let polynomial: Result<Polynomial, ParserErr>;
+        let polynomial: Result<Polynomial64, ParserErr>;
         match self.lexer.curr_tok.token_type {
             TokType::Lpar => {
                 self.get_next_token()?;
@@ -254,7 +254,7 @@ impl Parser {
         polynomial
     }
 
-    pub fn parse_term_expr(&mut self) -> Result<Polynomial, ParserErr> {
+    pub fn parse_term_expr(&mut self) -> Result<Polynomial64, ParserErr> {
         info!(
             "parse_term_expr: recieved token {:?}",
             self.lexer.curr_tok.token_type
@@ -280,7 +280,7 @@ impl Parser {
         }
     }
 
-    pub fn parse_poly_expr(&mut self) -> Result<Polynomial, ParserErr> {
+    pub fn parse_poly_expr(&mut self) -> Result<Polynomial64, ParserErr> {
         info!(
             "parse_poly_expr: recieved token {:?}",
             self.lexer.curr_tok.token_type
@@ -312,14 +312,14 @@ impl Parser {
         }
     }
 
-    pub fn start_parser(&mut self) -> Result<Polynomial, ParserErr> {
+    pub fn start_parser(&mut self) -> Result<Polynomial64, ParserErr> {
         let now = Instant::now();
         // Check for empty input
         while self.lexer.curr_tok.token_type == TokType::Newl {
             self.get_next_token()?
         }
         if self.lexer.curr_tok.token_type == TokType::End {
-            return Ok(Polynomial::new());
+            return Ok(Polynomial64::new());
         }
 
         let mut parser_res = self.parse_poly_expr();
@@ -559,7 +559,23 @@ mod tests {
         let mut parser = Parser::parser_init(String::from("x^3 - x^2 - (x + 5)*(x - 7)")).unwrap();
         let polynomial = parser.start_parser();
         match polynomial {
-            Ok(v) => assert_eq!(v.expr(), "x^3 - 2x^2 + 2x + 35"),
+            Ok(v) => {
+                println!("{:?}", v);
+                assert_eq!(v.expr(), "x^3 - 2x^2 + 2x + 35");
+            }
+            Err(e) => assert!(false, "{:?}", e),
+        }
+    }
+
+    #[rstest]
+    fn parse_polynomial_subtraction_and_multiplication_c() {
+        let mut parser = Parser::parser_init(String::from("x^2 - (x + 5)*(x - 7)")).unwrap();
+        let polynomial = parser.start_parser();
+        match polynomial {
+            Ok(v) => {
+                println!("{:?}", v);
+                assert_eq!(v.expr(), "2x + 35");
+            }
             Err(e) => assert!(false, "{:?}", e),
         }
     }
