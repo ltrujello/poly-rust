@@ -417,9 +417,9 @@ mod tests {
         let polynomial = parser.parse_polynomial().unwrap();
 
         assert_eq!(polynomial.monomials.len(), 3);
-        assert_eq!(polynomial.monomials[0].expr().as_str(), "4xyz");
-        assert_eq!(polynomial.monomials[1].expr().as_str(), "3yz");
-        assert_eq!(polynomial.monomials[2].expr().as_str(), "3x");
+        assert_eq!(format!("{}", polynomial.monomials[0]), "4xyz");
+        assert_eq!(format!("{}", polynomial.monomials[1]), "3yz");
+        assert_eq!(format!("{}", polynomial.monomials[2]), "3x");
     }
 
     #[rstest]
@@ -462,7 +462,7 @@ mod tests {
         let mut parser = Parser::parser_init(String::from("(x + y) * (x + y)")).unwrap();
         let polynomial = parser.start_parser();
         match polynomial {
-            Ok(v) => assert_eq!(v.expr(), "x^2 + 2xy + y^2"),
+            Ok(v) => assert_eq!(format!("{}", v), "x^2 + 2xy + y^2"),
             Err(e) => assert!(false, "{:?}", e),
         }
     }
@@ -473,7 +473,7 @@ mod tests {
             Parser::parser_init(String::from("(((x + y) * (x + y))) * (x + y)")).unwrap();
         let polynomial = parser.start_parser();
         match polynomial {
-            Ok(v) => assert_eq!(v.expr(), "x^3 + 3x^2y + 3xy^2 + y^3"),
+            Ok(v) => assert_eq!(format!("{}", v), "x^3 + 3x^2y + 3xy^2 + y^3"),
             Err(e) => assert!(false, "{:?}", e),
         }
     }
@@ -484,7 +484,7 @@ mod tests {
             Parser::parser_init(String::from("(x^4 + 1) * ((x^3 + 2x) * (x + 1))")).unwrap();
         let polynomial = parser.start_parser();
         match polynomial {
-            Ok(v) => assert_eq!(v.expr(), "x^8 + x^7 + 2x^6 + 2x^5 + x^4 + x^3 + 2x^2 + 2x"),
+            Ok(v) => assert_eq!(format!("{}", v), "x^8 + x^7 + 2x^6 + 2x^5 + x^4 + x^3 + 2x^2 + 2x"),
             Err(e) => assert!(false, "{:?}", e),
         }
     }
@@ -497,7 +497,7 @@ mod tests {
         .unwrap();
         let polynomial = parser.start_parser();
         match polynomial {
-            Ok(v) => assert_eq!(v.expr(), "x^4 + 4x^3y + 4x^3z + 6x^2y^2 + 12x^2yz + 6x^2z^2 + 4xy^3 + 12xy^2z + 12xyz^2 + 4xz^3 + y^4 + 4y^3z + 6y^2z^2 + 4yz^3 + z^4"),
+            Ok(v) => assert_eq!(format!("{}", v), "x^4 + 4x^3y + 4x^3z + 6x^2y^2 + 12x^2yz + 6x^2z^2 + 4xy^3 + 12xy^2z + 12xyz^2 + 4xz^3 + y^4 + 4y^3z + 6y^2z^2 + 4yz^3 + z^4"),
             Err(e) => assert!(false, "{:?}", e),
         }
     }
@@ -508,7 +508,7 @@ mod tests {
             Parser::parser_init(String::from("((x - y) * (x + y)) * (x + y)")).unwrap();
         let polynomial = parser.start_parser();
         match polynomial {
-            Ok(v) => assert_eq!(v.expr(), "x^3 + x^2y - xy^2 - y^3"),
+            Ok(v) => assert_eq!(format!("{}", v), "x^3 + x^2y - xy^2 - y^3"),
             Err(e) => assert!(false, "{:?}", e),
         }
     }
@@ -519,7 +519,7 @@ mod tests {
             Parser::parser_init(String::from("(((x - y) * (x + y)) * (x + y)) * (x + y)")).unwrap();
         let polynomial = parser.start_parser();
         match polynomial {
-            Ok(v) => assert_eq!(v.expr(), "x^4 + 2x^3y - 2xy^3 - y^4"),
+            Ok(v) => assert_eq!(format!("{}", v), "x^4 + 2x^3y - 2xy^3 - y^4"),
             Err(e) => assert!(false, "{:?}", e),
         }
     }
@@ -529,7 +529,7 @@ mod tests {
         let mut parser = Parser::parser_init(String::from("(((x + y)))")).unwrap();
         let polynomial = parser.start_parser();
         match polynomial {
-            Ok(v) => assert_eq!(v.expr(), "x + y"),
+            Ok(v) => assert_eq!(format!("{}", v), "x + y"),
             Err(e) => assert!(false, "{:?}", e),
         }
     }
@@ -539,7 +539,7 @@ mod tests {
         let mut parser = Parser::parser_init(String::from("x^3 + x^2 + (x + 5)*(x - 7)")).unwrap();
         let polynomial = parser.start_parser();
         match polynomial {
-            Ok(v) => assert_eq!(v.expr(), "x^3 + 2x^2 - 2x - 35"),
+            Ok(v) => assert_eq!(format!("{}", v), "x^3 + 2x^2 - 2x - 35"),
             Err(e) => assert!(false, "{:?}", e),
         }
     }
@@ -549,7 +549,7 @@ mod tests {
         let mut parser = Parser::parser_init(String::from("x^3 - x^2 + (x + 5)*(x - 7)")).unwrap();
         let polynomial = parser.start_parser();
         match polynomial {
-            Ok(v) => assert_eq!(v.expr(), "x^3 - 2x - 35"),
+            Ok(v) => assert_eq!(format!("{}", v), "x^3 - 2x - 35"),
             Err(e) => assert!(false, "{:?}", e),
         }
     }
@@ -561,7 +561,7 @@ mod tests {
         match polynomial {
             Ok(v) => {
                 println!("{:?}", v);
-                assert_eq!(v.expr(), "x^3 - 2x^2 + 2x + 35");
+                assert_eq!(format!("{}", v), "x^3 - 2x^2 + 2x + 35");
             }
             Err(e) => assert!(false, "{:?}", e),
         }
@@ -574,7 +574,7 @@ mod tests {
         match polynomial {
             Ok(v) => {
                 println!("{:?}", v);
-                assert_eq!(v.expr(), "2x + 35");
+                assert_eq!(format!("{}", v), "2x + 35");
             }
             Err(e) => assert!(false, "{:?}", e),
         }
@@ -585,7 +585,7 @@ mod tests {
         let mut parser = Parser::parser_init(String::from("(x + 5)*(x - 7)*(x - 4)")).unwrap();
         let polynomial = parser.start_parser();
         match polynomial {
-            Ok(v) => assert_eq!(v.expr(), "x^3 - 6x^2 - 27x + 140"),
+            Ok(v) => assert_eq!(format!("{}", v), "x^3 - 6x^2 - 27x + 140"),
             Err(e) => assert!(false, "{:?}", e),
         }
     }
@@ -596,7 +596,7 @@ mod tests {
             Parser::parser_init(String::from("x^4 + x^3 + (x + 5)*(x - 7)*(x - 4)")).unwrap();
         let polynomial = parser.start_parser();
         match polynomial {
-            Ok(v) => assert_eq!(v.expr(), "x^4 + 2x^3 - 6x^2 - 27x + 140"),
+            Ok(v) => assert_eq!(format!("{}", v), "x^4 + 2x^3 - 6x^2 - 27x + 140"),
             Err(e) => assert!(false, "{:?}", e),
         }
     }
@@ -609,7 +609,7 @@ mod tests {
         .unwrap();
         let polynomial = parser.start_parser();
         match polynomial {
-            Ok(v) => assert_eq!(v.expr(), "2x^3 - 12x^2 - 54x + 280"),
+            Ok(v) => assert_eq!(format!("{}", v), "2x^3 - 12x^2 - 54x + 280"),
             Err(e) => assert!(false, "{:?}", e),
         }
     }
@@ -620,7 +620,7 @@ mod tests {
             Parser::parser_init(String::from("(2x + 10)*(x - 7)*(x^2 + x + 1)")).unwrap();
         let polynomial = parser.start_parser();
         match polynomial {
-            Ok(v) => assert_eq!(v.expr(), "2x^4 - 2x^3 - 72x^2 - 74x - 70"),
+            Ok(v) => assert_eq!(format!("{}", v), "2x^4 - 2x^3 - 72x^2 - 74x - 70"),
             Err(e) => assert!(false, "{:?}", e),
         }
     }
@@ -632,7 +632,7 @@ mod tests {
         let polynomial = parser.start_parser();
         match polynomial {
             Ok(v) => assert_eq!(
-                v.expr(),
+                format!("{}", v),
                 "2x^4 - 4x^3 + 2x^2y + 2x^2z - 68x^2 - 4xy - 4xz - 4x - 70y - 70z - 70"
             ),
             Err(e) => assert!(false, "{:?}", e),
@@ -647,7 +647,7 @@ mod tests {
         .unwrap();
         let polynomial = parser.start_parser();
         match polynomial {
-            Ok(v) => assert_eq!(v.expr(), "x^5 + x^4y - 7x^4 + 2x^3y + 2x^3z + 2x^2y^2 + 2x^2yz + 2x^3 - 12x^2y - 14x^2z + xy^2 + 2xyz + xz^2 + y^3 + 2y^2z + yz^2 - 14x^2 + 2xy + 2xz - 5y^2 - 12yz - 7z^2 + x - 13y - 14z - 7"),
+            Ok(v) => assert_eq!(format!("{}", v), "x^5 + x^4y - 7x^4 + 2x^3y + 2x^3z + 2x^2y^2 + 2x^2yz + 2x^3 - 12x^2y - 14x^2z + xy^2 + 2xyz + xz^2 + y^3 + 2y^2z + yz^2 - 14x^2 + 2xy + 2xz - 5y^2 - 12yz - 7z^2 + x - 13y - 14z - 7"),
             Err(e) => assert!(false, "{:?}", e),
         }
     }
@@ -657,7 +657,7 @@ mod tests {
         let mut parser = Parser::parser_init(String::from("(x + 2)^3")).unwrap();
         let polynomial = parser.start_parser();
         match polynomial {
-            Ok(v) => assert_eq!(v.expr(), "x^3 + 6x^2 + 12x + 8"),
+            Ok(v) => assert_eq!(format!("{}", v), "x^3 + 6x^2 + 12x + 8"),
             Err(e) => assert!(false, "{:?}", e),
         }
     }
@@ -667,7 +667,7 @@ mod tests {
         let mut parser = Parser::parser_init(String::from("(x + 3)^2*(x + 3)")).unwrap();
         let polynomial = parser.start_parser();
         match polynomial {
-            Ok(v) => assert_eq!(v.expr(), "x^3 + 9x^2 + 27x + 27"),
+            Ok(v) => assert_eq!(format!("{}", v), "x^3 + 9x^2 + 27x + 27"),
             Err(e) => assert!(false, "{:?}", e),
         }
     }
@@ -677,7 +677,7 @@ mod tests {
         let mut parser = Parser::parser_init(String::from("(x + y + z)^5")).unwrap();
         let polynomial = parser.start_parser();
         match polynomial {
-            Ok(v) => assert_eq!(v.expr(), "x^5 + 5x^4y + 5x^4z + 10x^3y^2 + 20x^3yz + 10x^3z^2 + 10x^2y^3 + 30x^2y^2z + 30x^2yz^2 + 10x^2z^3 + 5xy^4 + 20xy^3z + 30xy^2z^2 + 20xyz^3 + 5xz^4 + y^5 + 5y^4z + 10y^3z^2 + 10y^2z^3 + 5yz^4 + z^5"),
+            Ok(v) => assert_eq!(format!("{}", v), "x^5 + 5x^4y + 5x^4z + 10x^3y^2 + 20x^3yz + 10x^3z^2 + 10x^2y^3 + 30x^2y^2z + 30x^2yz^2 + 10x^2z^3 + 5xy^4 + 20xy^3z + 30xy^2z^2 + 20xyz^3 + 5xz^4 + y^5 + 5y^4z + 10y^3z^2 + 10y^2z^3 + 5yz^4 + z^5"),
             Err(e) => assert!(false, "{:?}", e),
         }
     }
@@ -687,7 +687,7 @@ mod tests {
         let mut parser = Parser::parser_init(String::from("(x^2 + (x + 2)*(x + 2))^2")).unwrap();
         let polynomial = parser.start_parser();
         match polynomial {
-            Ok(v) => assert_eq!(v.expr(), "4x^4 + 16x^3 + 32x^2 + 32x + 16"),
+            Ok(v) => assert_eq!(format!("{}", v), "4x^4 + 16x^3 + 32x^2 + 32x + 16"),
             Err(e) => assert!(false, "{:?}", e),
         }
     }
@@ -697,7 +697,7 @@ mod tests {
         let mut parser = Parser::parser_init(String::from("x^3 + (x^3) + x^3 ")).unwrap();
         let polynomial = parser.start_parser();
         match polynomial {
-            Ok(v) => assert_eq!(v.expr(), "3x^3"),
+            Ok(v) => assert_eq!(format!("{}", v), "3x^3"),
             Err(e) => assert!(false, "{:?}", e),
         }
     }
@@ -707,7 +707,7 @@ mod tests {
         let mut parser = Parser::parser_init(String::from("x^3 + (x + 3)*(x + 3) + x^2")).unwrap();
         let polynomial = parser.start_parser();
         match polynomial {
-            Ok(v) => assert_eq!(v.expr(), "x^3 + 2x^2 + 6x + 9"),
+            Ok(v) => assert_eq!(format!("{}", v), "x^3 + 2x^2 + 6x + 9"),
             Err(e) => assert!(false, "{:?}", e),
         }
     }
@@ -718,7 +718,7 @@ mod tests {
             Parser::parser_init(String::from("x^3 + (x + 5)^3*(x + 4) + x^3 ")).unwrap();
         let polynomial = parser.start_parser();
         match polynomial {
-            Ok(v) => assert_eq!(v.expr(), "x^4 + 21x^3 + 135x^2 + 425x + 500"),
+            Ok(v) => assert_eq!(format!("{}", v), "x^4 + 21x^3 + 135x^2 + 425x + 500"),
             Err(e) => assert!(false, "{:?}", e),
         }
     }
@@ -731,7 +731,7 @@ mod tests {
         .unwrap();
         let polynomial = parser.start_parser();
         match polynomial {
-            Ok(v) => assert_eq!(v.expr(), "x^3 + 2x^2 + 8x + 8"),
+            Ok(v) => assert_eq!(format!("{}", v), "x^3 + 2x^2 + 8x + 8"),
             Err(e) => assert!(false, "{:?}", e),
         }
     }
@@ -741,7 +741,7 @@ mod tests {
         let mut parser = Parser::parser_init(String::from("x^3 + (x + 3)*(x + 3) - x^2")).unwrap();
         let polynomial = parser.start_parser();
         match polynomial {
-            Ok(v) => assert_eq!(v.expr(), "x^3 + 6x + 9"),
+            Ok(v) => assert_eq!(format!("{}", v), "x^3 + 6x + 9"),
             Err(e) => assert!(false, "{:?}", e),
         }
     }
@@ -751,7 +751,7 @@ mod tests {
         let mut parser = Parser::parser_init(String::from("x^3 - (x^3) - x^3 ")).unwrap();
         let polynomial = parser.start_parser();
         match polynomial {
-            Ok(v) => assert_eq!(v.expr(), "-x^3"),
+            Ok(v) => assert_eq!(format!("{}", v), "-x^3"),
             Err(e) => assert!(false, "{:?}", e),
         }
     }
@@ -761,7 +761,7 @@ mod tests {
         let mut parser = Parser::parser_init(String::from("x^3 - (x + 3)*(x + 3) + x^2")).unwrap();
         let polynomial = parser.start_parser();
         match polynomial {
-            Ok(v) => assert_eq!(v.expr(), "x^3 - 6x - 9"),
+            Ok(v) => assert_eq!(format!("{}", v), "x^3 - 6x - 9"),
             Err(e) => assert!(false, "{:?}", e),
         }
     }
@@ -771,7 +771,7 @@ mod tests {
         let mut parser = Parser::parser_init(String::from("-(x + y + z)")).unwrap();
         let polynomial = parser.start_parser();
         match polynomial {
-            Ok(v) => assert_eq!(v.expr(), "-x - y - z"),
+            Ok(v) => assert_eq!(format!("{}", v), "-x - y - z"),
             Err(e) => assert!(false, "{:?}", e),
         }
     }
@@ -781,7 +781,7 @@ mod tests {
         let mut parser = Parser::parser_init(String::from("-(x + 2)*(x + 2)")).unwrap();
         let polynomial = parser.start_parser();
         match polynomial {
-            Ok(v) => assert_eq!(v.expr(), "-x^2 - 4x - 4"),
+            Ok(v) => assert_eq!(format!("{}", v), "-x^2 - 4x - 4"),
             Err(e) => assert!(false, "{:?}", e),
         }
     }
@@ -792,7 +792,7 @@ mod tests {
             Parser::parser_init(String::from("-(x^3 - (x + 3)*(x + 3) + x^2)")).unwrap();
         let polynomial = parser.start_parser();
         match polynomial {
-            Ok(v) => assert_eq!(v.expr(), "-x^3 + 6x + 9"),
+            Ok(v) => assert_eq!(format!("{}", v), "-x^3 + 6x + 9"),
             Err(e) => assert!(false, "{:?}", e),
         }
     }
@@ -802,7 +802,7 @@ mod tests {
         let mut parser = Parser::parser_init(String::from("-(x + 2)*-(x + 2)*-(x + 2)")).unwrap();
         let polynomial = parser.start_parser();
         match polynomial {
-            Ok(v) => assert_eq!(v.expr(), "-x^3 - 6x^2 - 12x - 8"),
+            Ok(v) => assert_eq!(format!("{}", v), "-x^3 - 6x^2 - 12x - 8"),
             Err(e) => assert!(false, "{:?}", e),
         }
     }
@@ -812,7 +812,7 @@ mod tests {
         let mut parser = Parser::parser_init(String::from("-(x + 2)*-(x + 2) - -(x + 2)")).unwrap();
         let polynomial = parser.start_parser();
         match polynomial {
-            Ok(v) => assert_eq!(v.expr(), "x^2 + 5x + 6"),
+            Ok(v) => assert_eq!(format!("{}", v), "x^2 + 5x + 6"),
             Err(e) => assert!(false, "{:?}", e),
         }
     }

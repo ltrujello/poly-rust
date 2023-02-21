@@ -3,6 +3,7 @@ use log::info;
 use num;
 use std::clone::Clone;
 use std::ops;
+use std::fmt;
 
 use crate::monomial_generic::Monomial;
 use crate::CRing;
@@ -32,65 +33,7 @@ where
         }
     }
 
-    pub fn expr(&self) -> String {
-        let mut output = String::from("");
-        let mut first_term_printed: bool = false;
-
-        for ind in 0..self.monomials.len() {
-            let monomial = &self.monomials[ind];
-            // skip nonzero terms
-            if monomial.coefficient.is_zero() {
-                continue;
-            }
-            // first term of a polynomial is printed differently
-            if first_term_printed == false {
-                let first_term = monomial;
-                let coeff = num::abs(first_term.coefficient.clone());
-                let term_expr = first_term.term_expr();
-                if first_term.coefficient.is_negative() {
-                    output.push_str("-");
-                }
-                // print coefficient
-                if coeff.is_one() {
-                    if first_term.degree() == 0 {
-                        output.push_str(&format!("{coeff}"));
-                    }
-                } else {
-                    output.push_str(&format!("{coeff}"));
-                }
-                // print term expr
-                if first_term.degree() != 0 {
-                    output.push_str(&format!("{term_expr}"));
-                }
-                first_term_printed = true;
-            } else {
-                if monomial.coefficient.is_negative() {
-                    output.push_str(" - ");
-                } else {
-                    output.push_str(" + ");
-                }
-                let coeff = num::abs(monomial.coefficient.clone());
-                let term_expr = monomial.term_expr();
-                if coeff.is_one() {
-                    if monomial.degree() == 0 {
-                        output.push_str(&format!("{coeff}"));
-                    }
-                } else {
-                    output.push_str(&format!("{coeff}"));
-                }
-                if monomial.degree() != 0 {
-                    output.push_str(&format!("{term_expr}"));
-                }
-            }
-        }
-        output
-    }
-
-    pub fn print_polynomial(&self) {
-        println!("{}", self.expr());
-    }
-
-    // pub fn from(expr: &str) -> Result<Polynomial, ParserErr> {
+    // pub fn from(is expr: &str) -> Result<Polynomial, ParserErr> {
     //     let mut parser = Parser::parser_init(String::from(expr))?;
     //     let polynomial = parser.parse_polynomial()?;
     //     Ok(polynomial)
@@ -110,6 +53,65 @@ where
         for monomial in self.monomials.iter_mut() {
             monomial.coefficient = monomial.coefficient.clone() * scale.clone();
         }
+    }
+}
+
+
+impl<T> std::fmt::Display for Polynomial<T>
+where
+    T: std::fmt::Display + CRing + Clone + num::Signed,
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let mut output = format!("");
+        let mut first_term_printed: bool = false;
+
+        for ind in 0..self.monomials.len() {
+            let monomial = &self.monomials[ind];
+            // skip nonzero terms
+            if monomial.coefficient.is_zero() {
+                continue;
+            }
+            // terms after first monomial term are printed differently
+            if first_term_printed {
+                let sign: &str;
+                let coefficient: String;
+                let term_expr: String;
+
+                // sign 
+                if monomial.coefficient.is_negative() {
+                    sign = " - ";
+                } else {
+                    sign = " + ";
+                }
+
+                // coefficient
+                let abs_coeff = num::abs(monomial.coefficient.clone());
+                if abs_coeff.is_one() {
+                    if monomial.degree() == 0 {
+                        coefficient = format!("{abs_coeff}");
+                    }
+                    else {
+                        coefficient = format!("");
+                    }
+                } else {
+                    coefficient = format!("{abs_coeff}");
+                }
+
+                // term expression 
+                if monomial.degree() != 0 {
+                    term_expr = format!("{}", monomial.term_expr());
+                }
+                else {
+                    term_expr = format!("");
+                }
+
+                output.push_str(&format!("{}{}{}", sign, coefficient, term_expr));
+            } else {
+                output.push_str(&format!("{}", monomial));
+                first_term_printed = true;
+            }
+        }
+        write!(f, "{}", output)
     }
 }
 
@@ -475,11 +477,11 @@ mod tests {
         let polynomial = polynomial_b + polynomial_a;
 
         assert_eq!(polynomial.monomials.len(), 2);
-        assert_eq!(polynomial.expr(), "5x^2 + 13y^2");
+        assert_eq!(format!("{}", polynomial), "5x^2 + 13y^2");
         assert_eq!(polynomial.monomials[0].coefficient, 5.0);
         assert_eq!(polynomial.monomials[1].coefficient, 13.0);
-        assert_eq!(polynomial.monomials[0].expr().as_str(), "5x^2");
-        assert_eq!(polynomial.monomials[1].expr().as_str(), "13y^2");
+        assert_eq!(format!("{}", polynomial.monomials[0]), "5x^2");
+        assert_eq!(format!("{}", polynomial.monomials[1]), "13y^2");
     }
 
     #[rstest]
@@ -492,13 +494,13 @@ mod tests {
         polynomial += other;
 
         assert_eq!(polynomial.monomials.len(), 3);
-        assert_eq!(polynomial.expr(), "x^4 + x^3 + 2x^2");
+        assert_eq!(format!("{}", polynomial), "x^4 + x^3 + 2x^2");
         assert_eq!(polynomial.monomials[0].coefficient, 1.0);
         assert_eq!(polynomial.monomials[1].coefficient, 1.0);
         assert_eq!(polynomial.monomials[2].coefficient, 2.0);
-        assert_eq!(polynomial.monomials[0].expr().as_str(), "x^4");
-        assert_eq!(polynomial.monomials[1].expr().as_str(), "x^3");
-        assert_eq!(polynomial.monomials[2].expr().as_str(), "2x^2");
+        assert_eq!(format!("{}", polynomial.monomials[0]), "x^4");
+        assert_eq!(format!("{}", polynomial.monomials[1]), "x^3");
+        assert_eq!(format!("{}", polynomial.monomials[2]), "2x^2");
     }
 
     #[rstest]
@@ -511,15 +513,15 @@ mod tests {
         polynomial += other;
 
         assert_eq!(polynomial.monomials.len(), 4);
-        assert_eq!(polynomial.expr(), "2x^4 + x^3 + 2x^2 + x");
+        assert_eq!(format!("{}", polynomial), "2x^4 + x^3 + 2x^2 + x");
         assert_eq!(polynomial.monomials[0].coefficient, 2.0);
         assert_eq!(polynomial.monomials[1].coefficient, 1.0);
         assert_eq!(polynomial.monomials[2].coefficient, 2.0);
         assert_eq!(polynomial.monomials[3].coefficient, 1.0);
-        assert_eq!(polynomial.monomials[0].expr().as_str(), "2x^4");
-        assert_eq!(polynomial.monomials[1].expr().as_str(), "x^3");
-        assert_eq!(polynomial.monomials[2].expr().as_str(), "2x^2");
-        assert_eq!(polynomial.monomials[3].expr().as_str(), "x");
+        assert_eq!(format!("{}", polynomial.monomials[0]), "2x^4");
+        assert_eq!(format!("{}", polynomial.monomials[1]), "x^3");
+        assert_eq!(format!("{}", polynomial.monomials[2]), "2x^2");
+        assert_eq!(format!("{}", polynomial.monomials[3]), "x");
     }
 
     #[rstest]
@@ -527,10 +529,10 @@ mod tests {
         let polynomial = polynomial_a - polynomial_b;
 
         assert_eq!(polynomial.monomials.len(), 2);
-        assert_eq!(polynomial.expr(), "5x^2 - y^2");
+        assert_eq!(format!("{}", polynomial), "5x^2 - y^2");
         assert_eq!(polynomial.monomials[0].coefficient, 5.0);
         assert_eq!(polynomial.monomials[1].coefficient, -1.0);
-        assert_eq!(polynomial.monomials[0].expr().as_str(), "5x^2");
+        assert_eq!(format!("{}", polynomial.monomials[0]), "5x^2");
         assert_eq!(format!("{}", polynomial.monomials[1]), "-y^2");
     }
 
@@ -544,11 +546,11 @@ mod tests {
         polynomial -= other;
 
         assert_eq!(polynomial.monomials.len(), 3);
-        assert_eq!(polynomial.expr(), "x^4 + x^3");
+        assert_eq!(format!("{}", polynomial), "x^4 + x^3");
         assert_eq!(polynomial.monomials[0].coefficient, 1.0);
         assert_eq!(polynomial.monomials[1].coefficient, 1.0);
-        assert_eq!(polynomial.monomials[0].expr().as_str(), "x^4");
-        assert_eq!(polynomial.monomials[1].expr().as_str(), "x^3");
+        assert_eq!(format!("{}", polynomial.monomials[0]), "x^4");
+        assert_eq!(format!("{}", polynomial.monomials[1]), "x^3");
     }
 
     #[rstest]
@@ -561,10 +563,10 @@ mod tests {
         polynomial -= other;
 
         assert_eq!(polynomial.monomials.len(), 4);
-        assert_eq!(polynomial.expr(), "x^3 - x");
+        assert_eq!(format!("{}", polynomial), "x^3 - x");
         assert_eq!(polynomial.monomials[1].coefficient, 1.0);
         assert_eq!(polynomial.monomials[3].coefficient, -1.0);
-        assert_eq!(polynomial.monomials[1].expr().as_str(), "x^3");
+        assert_eq!(format!("{}", polynomial.monomials[1]), "x^3");
         assert_eq!(format!("{}", polynomial.monomials[3]), "-x");
     }
 
@@ -585,23 +587,23 @@ mod tests {
                 power_list: vec![0, 4, 0],
             }
         );
-        assert_eq!(polynomial.expr(), "35x^2y^2 + 42y^4");
-        assert_eq!(polynomial.monomials[0].expr().as_str(), "35x^2y^2");
-        assert_eq!(polynomial.monomials[1].expr().as_str(), "42y^4");
+        assert_eq!(format!("{}", polynomial), "35x^2y^2 + 42y^4");
+        assert_eq!(format!("{}", polynomial.monomials[0]), "35x^2y^2");
+        assert_eq!(format!("{}", polynomial.monomials[1]), "42y^4");
     }
 
     #[rstest]
     fn test_pow_a(linear_polynomial: Polynomial64) {
-        assert_eq!(linear_polynomial.pow(1).expr(), "x + 2");
+        assert_eq!(format!("{}", linear_polynomial.pow(1)), "x + 2");
     }
 
     #[rstest]
     fn test_pow_b(linear_polynomial: Polynomial64) {
-        assert_eq!(linear_polynomial.pow(2).expr(), "x^2 + 4x + 4");
+        assert_eq!(format!("{}", linear_polynomial.pow(2)), "x^2 + 4x + 4");
     }
 
     #[rstest]
     fn test_pow_c(linear_polynomial: Polynomial64) {
-        assert_eq!(linear_polynomial.pow(3).expr(), "x^3 + 6x^2 + 12x + 8");
+        assert_eq!(format!("{}", linear_polynomial.pow(3)), "x^3 + 6x^2 + 12x + 8");
     }
 }
