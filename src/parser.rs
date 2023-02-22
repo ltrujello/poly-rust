@@ -484,7 +484,10 @@ mod tests {
             Parser::parser_init(String::from("(x^4 + 1) * ((x^3 + 2x) * (x + 1))")).unwrap();
         let polynomial = parser.start_parser();
         match polynomial {
-            Ok(v) => assert_eq!(format!("{}", v), "x^8 + x^7 + 2x^6 + 2x^5 + x^4 + x^3 + 2x^2 + 2x"),
+            Ok(v) => assert_eq!(
+                format!("{}", v),
+                "x^8 + x^7 + 2x^6 + 2x^5 + x^4 + x^3 + 2x^2 + 2x"
+            ),
             Err(e) => assert!(false, "{:?}", e),
         }
     }

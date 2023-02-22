@@ -1,9 +1,11 @@
+use crate::parser::{Parser, ParserErr};
+use crate::CRing;
+
 use std::clone::Clone;
 use std::cmp::Ordering;
 use std::fmt;
 use std::ops;
 
-use crate::CRing;
 use log::info;
 
 pub type Monomial32 = Monomial<f32>;
@@ -96,11 +98,11 @@ impl<T: CRing + std::fmt::Display> Monomial<T> {
         self.power_list.iter().sum()
     }
 
-    // pub fn from(expr: &str) -> Result<Monomial, ParserErr> {
-    //     let mut parser = Parser::parser_init(String::from(expr))?;
-    //     let monomial = parser.parse_monomial()?;
-    //     Ok(monomial)
-    // }
+    pub fn from(expr: &str) -> Result<Monomial64, ParserErr> {
+        let mut parser = Parser::parser_init(String::from(expr))?;
+        let monomial = parser.parse_monomial()?;
+        Ok(monomial)
+    }
 }
 
 impl<T> std::fmt::Display for Monomial<T>
@@ -133,7 +135,7 @@ where
         if term_expr.is_empty() {
             coeff = format!("{}", self.coefficient)
         } else {
-            let mut abs_coeff = num::abs(self.coefficient.clone());
+            let abs_coeff = num::abs(self.coefficient.clone());
 
             if self.coefficient.is_negative() {
                 coeff.push_str("-");
@@ -567,29 +569,47 @@ mod tests {
 
     #[rstest]
     fn test_monomial_from_str_a(monomial_a: Monomial64) {
-        assert_eq!(monomial_a.coefficient, 1.0);
-        assert_eq!(monomial_a.degree(), 3);
-        assert_eq!(monomial_a.power(0), 1);
-        assert_eq!(monomial_a.power(1), 1);
-        assert_eq!(monomial_a.power(2), 1);
+        let monomial = Monomial::<f64>::from(&format!("{}", monomial_a));
+        match monomial {
+            Ok(v) => {
+                assert_eq!(v.coefficient, 1.0);
+                assert_eq!(v.degree(), 3);
+                assert_eq!(v.power(0), 1);
+                assert_eq!(v.power(1), 1);
+                assert_eq!(v.power(2), 1);
+            }
+            Err(_) => assert!(false),
+        }
     }
 
     #[rstest]
     fn test_monomial_from_str_b(monomial_b: Monomial64) {
-        assert_eq!(monomial_b.coefficient, 3.5);
-        assert_eq!(monomial_b.degree(), 8);
-        assert_eq!(monomial_b.power(0), 2);
-        assert_eq!(monomial_b.power(1), 1);
-        assert_eq!(monomial_b.power(2), 5);
+        let monomial = Monomial::<f64>::from(&format!("{}", monomial_b));
+        match monomial {
+            Ok(v) => {
+                assert_eq!(v.coefficient, 3.5);
+                assert_eq!(v.degree(), 8);
+                assert_eq!(v.power(0), 2);
+                assert_eq!(v.power(1), 1);
+                assert_eq!(v.power(2), 5);
+            }
+            Err(_) => assert!(false),
+        }
     }
 
     #[rstest]
     fn test_monomial_from_str_c(monomial_c: Monomial64) {
-        assert_eq!(monomial_c.coefficient, 5.0);
-        assert_eq!(monomial_c.degree(), 3);
-        assert_eq!(monomial_c.power(0), 1);
-        assert_eq!(monomial_c.power(1), 2);
-        assert_eq!(monomial_c.power(2), 0);
+        let monomial = Monomial::<f64>::from(&format!("{}", monomial_c));
+        match monomial {
+            Ok(v) => {
+                assert_eq!(monomial_c.coefficient, 5.0);
+                assert_eq!(monomial_c.degree(), 3);
+                assert_eq!(monomial_c.power(0), 1);
+                assert_eq!(monomial_c.power(1), 2);
+                assert_eq!(monomial_c.power(2), 0);
+            }
+            Err(_) => assert!(false),
+        }
     }
 
     #[rstest]
