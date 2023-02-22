@@ -5,12 +5,13 @@ use std::io;
 use std::io::Write;
 
 use poly::monomial_generic::Monomial;
+use poly::monomial_generic::Monomial64;
 use poly::polynomial_generic::Polynomial;
+use poly::polynomial_generic::Polynomial64;
 
 fn main() {
     env_logger::init();
     println!("\x1B[36m    ______\n   //   //   ____   //   \\\\ //\n  //___//  //  //  //     \\\\/\n //       //__//  //__    //\n//                       //\x1B[0m");
-
     loop {
         print!("~> ");
         io::stdout().flush().unwrap();
@@ -24,7 +25,7 @@ fn main() {
                 let res = parser.start_parser();
                 match res {
                     Ok(v) => {
-                        println!("{}", v.expr());
+                        println!("{}", v);
                     }
                     Err(e) => {
                         handle_parser_error(input_copy, parser.lexer.curr_pos, e);

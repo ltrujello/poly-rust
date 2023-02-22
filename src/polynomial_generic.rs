@@ -35,7 +35,7 @@ where
 
     pub fn from(expr: &str) -> Result<Polynomial64, ParserErr> {
         let mut parser = Parser::parser_init(String::from(expr))?;
-        let polynomial = parser.parse_polynomial()?;
+        let polynomial = parser.parse_poly_expr()?;
         Ok(polynomial)
     }
 
