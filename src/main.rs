@@ -4,11 +4,6 @@ use poly::parser::{Parser, ParserErr};
 use std::io;
 use std::io::Write;
 
-use poly::monomial_generic::Monomial;
-use poly::monomial_generic::Monomial64;
-use poly::polynomial_generic::Polynomial;
-use poly::polynomial_generic::Polynomial64;
-
 fn main() {
     env_logger::init();
     println!("\x1B[36m    ______\n   //   //   ____   //   \\\\ //\n  //___//  //  //  //     \\\\/\n //       //__//  //__    //\n//                       //\x1B[0m");

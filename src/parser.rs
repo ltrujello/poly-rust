@@ -1,6 +1,6 @@
 use crate::lexer::{Lexer, TokType, Token};
-use crate::monomial_generic::Monomial64;
-use crate::polynomial_generic::Polynomial64;
+use crate::monomial::Monomial64;
+use crate::polynomial::Polynomial64;
 use log::{debug, error, info};
 use std::time::Instant;
 
