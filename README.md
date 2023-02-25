@@ -25,9 +25,15 @@ println!("{}", sub.pow(2));
 ```
 
 ## Type Generics
-Polynomials are generally elements over a commutative ring whose coefficients are elements of a field. However, you really only need the coefficients to be elements over a commutative ring. Hence, this library enforces that the types `T` for polynomial coefficients of the `Polynomial` struct (and hence monomial coefficients of the `Monomial` struct) must satisfy the trait `CRing` defined as follows. 
+Polynomials are generally elements over a commutative ring `K[x_1, ... x_n]` whose coefficients are elements over a field `K`. Practically speaking you really only need the coefficients to be elements over a commutative ring. Hence, this library enforces that the types `T` for polynomial coefficients of the `Polynomial` struct (and hence monomial coefficients of the `Monomial` struct) must satisfy the trait `CRing` defined as follows. 
 ```rust
-CRing: Add<Rhs, Output = Output> + Sub<Rhs, Output = Output> + Mul<Rhs, Output = Output> + PartialEq
+pub trait CRing<Rhs = Self, Output = Self>:
+    Zero
+    + One
+    + Add<Rhs, Output = Output>
+    + Sub<Rhs, Output = Output>
+    + Mul<Rhs, Output = Output>
+{}
 ```
 
 ## Grammar

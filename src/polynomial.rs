@@ -1,6 +1,4 @@
 use crate::parser::{Parser, ParserErr};
-use log::info;
-use num;
 use std::clone::Clone;
 use std::fmt;
 use std::ops;
@@ -26,13 +24,6 @@ where
         }
     }
 
-    pub fn insert_monomial(&mut self, monomial: Monomial<T>) {
-        match self.monomials.binary_search(&monomial) {
-            Ok(_) => {}
-            Err(pos) => self.monomials.insert(pos, monomial),
-        }
-    }
-
     pub fn from(expr: &str) -> Result<Polynomial64, ParserErr> {
         let mut parser = Parser::parser_init(String::from(expr))?;
         let polynomial = parser.parse_poly_expr()?;
@@ -42,7 +33,19 @@ where
 
 impl<T> Polynomial<T>
 where
-    T: CRing + Clone,
+    T: CRing + PartialEq,
+{
+    pub fn insert_monomial(&mut self, monomial: Monomial<T>) {
+        match self.monomials.binary_search(&monomial) {
+            Ok(_) => {}
+            Err(pos) => self.monomials.insert(pos, monomial),
+        }
+    }
+}
+
+impl<T> Polynomial<T>
+where
+    T: CRing + PartialEq + Clone,
 {
     pub fn pow(&self, exponent: i32) -> Polynomial<T> {
         let mut ind = exponent - 1;
@@ -63,7 +66,7 @@ where
 
 impl<T> std::fmt::Display for Polynomial<T>
 where
-    T: std::fmt::Display + CRing + Clone + num::Signed,
+    T: std::fmt::Display + CRing + Clone + PartialEq,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut output = format!("");
@@ -78,36 +81,26 @@ where
             // terms after first monomial term are printed differently
             if first_term_printed {
                 let sign: &str;
-                let coefficient: String;
-                let term_expr: String;
+                let mut monomial_expr = format!("{}", monomial);
+                let is_negative: bool;
+
+                let mut chars = monomial_expr.chars();
+                let first_char = chars.next().unwrap();
+                if first_char == '-' {
+                    is_negative = true;
+                    monomial_expr = chars.as_str().to_string();
+                } else {
+                    is_negative = false;
+                }
 
                 // sign
-                if monomial.coefficient.is_negative() {
+                if is_negative {
                     sign = " - ";
                 } else {
                     sign = " + ";
                 }
 
-                // coefficient
-                let abs_coeff = num::abs(monomial.coefficient.clone());
-                if abs_coeff.is_one() {
-                    if monomial.degree() == 0 {
-                        coefficient = format!("{abs_coeff}");
-                    } else {
-                        coefficient = format!("");
-                    }
-                } else {
-                    coefficient = format!("{abs_coeff}");
-                }
-
-                // term expression
-                if monomial.degree() != 0 {
-                    term_expr = format!("{}", monomial.term_expr());
-                } else {
-                    term_expr = format!("");
-                }
-
-                output.push_str(&format!("{}{}{}", sign, coefficient, term_expr));
+                output.push_str(&format!("{}{}", sign, monomial_expr));
             } else {
                 output.push_str(&format!("{}", monomial));
                 first_term_printed = true;
@@ -131,7 +124,7 @@ where
 // Polynomial += Monomial
 impl<T> ops::AddAssign<Monomial<T>> for Polynomial<T>
 where
-    T: CRing + Clone,
+    T: CRing + Clone + PartialEq,
 {
     fn add_assign(&mut self, other: Monomial<T>) {
         match self
@@ -152,7 +145,7 @@ where
 // Polynomial -= Monomial
 impl<T> ops::SubAssign<Monomial<T>> for Polynomial<T>
 where
-    T: CRing + Clone,
+    T: CRing + Clone + PartialEq,
 {
     fn sub_assign(&mut self, mut other: Monomial<T>) {
         match self
@@ -176,7 +169,7 @@ where
 // Polynomial += Polynomial
 impl<T> ops::AddAssign for Polynomial<T>
 where
-    T: CRing + Clone,
+    T: CRing + Clone + PartialEq,
 {
     fn add_assign(&mut self, other: Self) {
         for monomial in other.monomials {
@@ -188,7 +181,7 @@ where
 // Polynomial -= Polynomial
 impl<T> ops::SubAssign for Polynomial<T>
 where
-    T: CRing + Clone,
+    T: CRing + Clone + PartialEq,
 {
     fn sub_assign(&mut self, other: Self) {
         for monomial in other.monomials {
@@ -200,7 +193,7 @@ where
 // Polynomial + Polynomial
 impl<T> ops::Add for Polynomial<T>
 where
-    T: CRing + Clone,
+    T: CRing + Clone + PartialEq,
 {
     type Output = Self;
     fn add(self, other: Self) -> Self {
@@ -213,7 +206,7 @@ where
 //Polynomial - Polynomial
 impl<T> ops::Sub for Polynomial<T>
 where
-    T: CRing + Clone,
+    T: CRing + Clone + PartialEq,
 {
     type Output = Self;
     fn sub(self, other: Self) -> Self {
@@ -259,7 +252,7 @@ where
 // Polynomial * Polynomial
 impl<T> ops::Mul for Polynomial<T>
 where
-    T: CRing + Clone,
+    T: CRing + Clone + PartialEq,
 {
     type Output = Self;
     fn mul(self, other: Self) -> Self {
@@ -276,7 +269,7 @@ where
 // Polynomial * &Polynomial
 impl<T> ops::Mul<&Polynomial<T>> for Polynomial<T>
 where
-    T: CRing + Clone,
+    T: CRing + Clone + PartialEq,
 {
     type Output = Self;
     fn mul(self, other: &Self) -> Self {

@@ -6,8 +6,6 @@ use std::cmp::Ordering;
 use std::fmt;
 use std::ops;
 
-use log::info;
-
 pub type Monomial32 = Monomial<f32>;
 pub type Monomial64 = Monomial<f64>;
 
@@ -19,7 +17,7 @@ pub struct Monomial<T: CRing> {
 
 impl<T> Monomial<T>
 where
-    T: CRing,
+    T: CRing + PartialEq,
 {
     pub fn cmp_terms(&self, other: &Self) -> Ordering {
         let degree_a: i32 = self.degree();
@@ -47,7 +45,12 @@ where
         }
         Ordering::Equal
     }
+}
 
+impl<T> Monomial<T>
+where
+    T: CRing,
+{
     pub fn power(&self, ind: usize) -> i32 {
         let power: i32;
         match self.power_list.get(ind) {
@@ -68,7 +71,10 @@ where
     }
 }
 
-impl<T: CRing + std::fmt::Display> Monomial<T> {
+impl<T> Monomial<T>
+where
+    T: CRing + std::fmt::Display + PartialEq,
+{
     pub fn expr(&self) -> String {
         let mut output: String = String::from("");
         if self.coefficient.is_one() {
@@ -112,7 +118,7 @@ impl<T: CRing + std::fmt::Display> Monomial<T> {
 
 impl<T> std::fmt::Display for Monomial<T>
 where
-    T: std::fmt::Display + CRing + Clone + num::Signed,
+    T: std::fmt::Display + CRing + Clone + PartialEq,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut term_expr = format!("");
@@ -136,19 +142,15 @@ where
             term_expr.push_str(&format!("{}{}", letter, exp));
         }
 
-        let mut coeff = format!("");
+        let coeff: String;
         if term_expr.is_empty() {
             coeff = format!("{}", self.coefficient)
+        } else if format!("{}", self.coefficient) == "-1" {
+            coeff = format!("-");
+        } else if self.coefficient.is_one() {
+            coeff = format!("");
         } else {
-            let abs_coeff = num::abs(self.coefficient.clone());
-
-            if self.coefficient.is_negative() {
-                coeff.push_str("-");
-            }
-
-            if !abs_coeff.is_one() {
-                coeff.push_str(&format!("{}", self.coefficient));
-            }
+            coeff = format!("{}", self.coefficient);
         }
 
         write!(f, "{}{}", coeff, term_expr)
@@ -164,7 +166,10 @@ impl<T: CRing + Clone> Clone for Monomial<T> {
     }
 }
 
-impl<T: CRing> Ord for Monomial<T> {
+impl<T> Ord for Monomial<T>
+where
+    T: CRing + PartialEq,
+{
     // http://pi.math.cornell.edu/~dmehrle/notes/old/alggeo/07MonomialOrdersandDivisionAlgorithm.pdf
     fn cmp(&self, other: &Self) -> Ordering {
         match self.cmp_terms(other) {
@@ -184,13 +189,19 @@ impl<T: CRing> Ord for Monomial<T> {
     }
 }
 
-impl<T: CRing> PartialOrd for Monomial<T> {
+impl<T> PartialOrd for Monomial<T>
+where
+    T: CRing + PartialEq,
+{
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
 
-impl<T: CRing> PartialEq for Monomial<T> {
+impl<T> PartialEq for Monomial<T>
+where
+    T: CRing + PartialEq,
+{
     fn eq(&self, other: &Self) -> bool {
         if self.coefficient != other.coefficient {
             return false;
@@ -202,7 +213,7 @@ impl<T: CRing> PartialEq for Monomial<T> {
     }
 }
 
-impl<T: CRing> Eq for Monomial<T> {}
+impl<T> Eq for Monomial<T> where T: CRing + PartialEq {}
 
 // Monomial* Monomial
 impl<T: CRing + Clone> ops::Mul for Monomial<T> {
@@ -594,11 +605,11 @@ mod tests {
         let monomial = Monomial::<f64>::from(&format!("{}", monomial_c));
         match monomial {
             Ok(v) => {
-                assert_eq!(monomial_c.coefficient, 5.0);
-                assert_eq!(monomial_c.degree(), 3);
-                assert_eq!(monomial_c.power(0), 1);
-                assert_eq!(monomial_c.power(1), 2);
-                assert_eq!(monomial_c.power(2), 0);
+                assert_eq!(v.coefficient, 5.0);
+                assert_eq!(v.degree(), 3);
+                assert_eq!(v.power(0), 1);
+                assert_eq!(v.power(1), 2);
+                assert_eq!(v.power(2), 0);
             }
             Err(_) => assert!(false),
         }
@@ -624,7 +635,33 @@ mod tests {
     }
 
     #[rstest]
-    fn test_monomial_display(monomial_a: Monomial64) {
+    fn test_monomial_display() {
+        let monomial_a = Monomial {
+            coefficient: 5.0,
+            power_list: vec![1, 0, 1],
+        };
+        assert_eq!("5xz", format!("{}", monomial_a).as_str());
+    }
+    #[rstest]
+    fn test_monomial_display_one() {
+        let monomial_a = Monomial {
+            coefficient: 1.0,
+            power_list: vec![1, 1, 0],
+        };
+        assert_eq!("xy", format!("{}", monomial_a).as_str());
+    }
+
+    #[rstest]
+    fn test_monomial_display_negative() {
+        let monomial_a = Monomial {
+            coefficient: -4.0,
+            power_list: vec![1, 0, 0],
+        };
+        assert_eq!("-4x", format!("{}", monomial_a).as_str());
+    }
+
+    #[rstest]
+    fn test_monomial_display_negative_one() {
         let monomial_a = Monomial {
             coefficient: -1.0,
             power_list: vec![1, 0, 0],
