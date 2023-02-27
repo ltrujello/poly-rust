@@ -3,6 +3,7 @@ use crate::monomial::Monomial64;
 use crate::polynomial::Polynomial64;
 use log::{debug, error, info};
 use std::time::Instant;
+use smallvec::{smallvec};
 
 pub struct Parser {
     pub lexer: Lexer,
@@ -77,7 +78,7 @@ impl Parser {
             self.get_next_token()?;
         }
 
-        let mut power_list = vec![0; 3];
+        let mut power_list = smallvec![0; 3];
         // A single loop will parse x ^ num
         loop {
             let prev_position = self.lexer.curr_pos;
@@ -343,6 +344,7 @@ mod tests {
     use super::*;
     use rstest::*;
     use std::mem;
+    use smallvec::{smallvec};
 
     #[rstest]
     fn parser_monomial_degree_one() {

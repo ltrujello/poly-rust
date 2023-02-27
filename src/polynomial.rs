@@ -304,16 +304,17 @@ mod tests {
     use super::*;
     use crate::monomial::Monomial64;
     use rstest::*;
+    use smallvec::{smallvec};
 
     #[fixture]
     fn polynomial_a() -> Polynomial64 {
         let monomial_a = Monomial {
             coefficient: 5.0,
-            power_list: vec![2, 0, 0],
+            power_list: smallvec![2, 0, 0],
         };
         let monomial_b = Monomial {
             coefficient: 6.0,
-            power_list: vec![0, 2, 0],
+            power_list: smallvec![0, 2, 0],
         };
         let mut polynomial: Polynomial<f64> = Polynomial::new();
         polynomial.insert_monomial(monomial_a);
@@ -325,7 +326,7 @@ mod tests {
     fn polynomial_b() -> Polynomial64 {
         let monomial_a = Monomial {
             coefficient: 7.0,
-            power_list: vec![0, 2, 0],
+            power_list: smallvec![0, 2, 0],
         };
         let mut polynomial: Polynomial<f64> = Polynomial::new();
         polynomial.insert_monomial(monomial_a);
@@ -336,11 +337,11 @@ mod tests {
     fn linear_polynomial() -> Polynomial64 {
         let monomial_a = Monomial {
             coefficient: 1.0,
-            power_list: vec![1, 0, 0],
+            power_list: smallvec![1, 0, 0],
         };
         let monomial_b = Monomial {
             coefficient: 2.0,
-            power_list: vec![0, 0, 0],
+            power_list: smallvec![0, 0, 0],
         };
         let mut polynomial: Polynomial<f64> = Polynomial::new();
         polynomial.insert_monomial(monomial_a);
@@ -352,15 +353,15 @@ mod tests {
     fn polynomial_c() -> Polynomial64 {
         let monomial_a = Monomial {
             coefficient: 1.0,
-            power_list: vec![4, 0, 0],
+            power_list: smallvec![4, 0, 0],
         };
         let monomial_b = Monomial {
             coefficient: 1.0,
-            power_list: vec![3, 0, 0],
+            power_list: smallvec![3, 0, 0],
         };
         let monomial_c = Monomial {
             coefficient: 1.0,
-            power_list: vec![2, 0, 0],
+            power_list: smallvec![2, 0, 0],
         };
         let mut polynomial: Polynomial<f64> = Polynomial::new();
         polynomial.insert_monomial(monomial_a);
@@ -373,15 +374,15 @@ mod tests {
     fn polynomial_d() -> Polynomial64 {
         let monomial_a = Monomial {
             coefficient: 1.0,
-            power_list: vec![2, 0, 0],
+            power_list: smallvec![2, 0, 0],
         };
         let monomial_b = Monomial {
             coefficient: 1.0,
-            power_list: vec![4, 0, 0],
+            power_list: smallvec![4, 0, 0],
         };
         let monomial_c = Monomial {
             coefficient: 1.0,
-            power_list: vec![1, 0, 0],
+            power_list: smallvec![1, 0, 0],
         };
         let mut polynomial: Polynomial<f64> = Polynomial::new();
         polynomial.insert_monomial(monomial_a);
@@ -394,7 +395,7 @@ mod tests {
     fn polynomial_e() -> Polynomial64 {
         let monomial_a = Monomial {
             coefficient: 1.0,
-            power_list: vec![2, 0, 0],
+            power_list: smallvec![2, 0, 0],
         };
         let mut polynomial: Polynomial<f64> = Polynomial::new();
         polynomial.insert_monomial(monomial_a);
@@ -402,15 +403,66 @@ mod tests {
     }
 
     #[rstest]
+    fn test_insert_monomial() {
+        let monomial_a = Monomial {
+            coefficient: 1.0,
+            power_list: smallvec![2, 0, 0],
+        };
+        let mut polynomial: Polynomial<f64> = Polynomial::new();
+        polynomial.insert_monomial(monomial_a);
+        assert_eq!(polynomial.monomials[0].coefficient, 1.0);
+        assert_eq!(polynomial.monomials[0].power_list[0], 2);
+    }
+
+    #[rstest]
+    fn test_insert_monomial_exists_with_diff_power_list() {
+        let monomial_a = Monomial {
+            coefficient: 1.0,
+            power_list: smallvec![2, 0, 0],
+        };
+        let monomial_b = Monomial {
+            coefficient: 3.0,
+            power_list: smallvec![1, 1, 1],
+        };
+        let mut polynomial: Polynomial<f64> = Polynomial::new();
+        polynomial.insert_monomial(monomial_a);
+        polynomial.insert_monomial(monomial_b);
+        assert_eq!(polynomial.monomials[0].coefficient, 3.0);
+        assert_eq!(polynomial.monomials[0].power_list[0], 1);
+        assert_eq!(polynomial.monomials[0].power_list[1], 1);
+        assert_eq!(polynomial.monomials[0].power_list[2], 1);
+    }
+
+    #[rstest]
+    fn test_insert_monomial_exists_with_same_power_list() {
+        let monomial_a = Monomial {
+            coefficient: 1.0,
+            power_list: smallvec![2, 0, 0],
+        };
+        let monomial_b = Monomial {
+            coefficient: 3.0,
+            power_list: smallvec![2, 0, 0],
+        };
+        let mut polynomial: Polynomial<f64> = Polynomial::new();
+        polynomial.insert_monomial(monomial_a);
+        polynomial.insert_monomial(monomial_b);
+        assert_eq!(polynomial.monomials[0].coefficient, 3.0);
+        assert_eq!(polynomial.monomials[0].power_list[0], 2);
+        assert_eq!(polynomial.monomials[0].power_list[1], 0);
+        assert_eq!(polynomial.monomials[0].power_list[2], 0);
+    }
+
+
+    #[rstest]
     fn test_polynomial_from_str_a(polynomial_a: Polynomial64) {
         // 5x^2 + 6y^2
         let monomial_a = Monomial {
             coefficient: 5.0,
-            power_list: vec![2, 0, 0],
+            power_list: smallvec![2, 0, 0],
         };
         let monomial_b = Monomial {
             coefficient: 6.0,
-            power_list: vec![0, 2, 0],
+            power_list: smallvec![0, 2, 0],
         };
         assert_eq!(polynomial_a.monomials[0], monomial_a);
         assert_eq!(polynomial_a.monomials[1], monomial_b);
@@ -421,7 +473,7 @@ mod tests {
         // 7y^2
         let monomial = Monomial {
             coefficient: 7.0,
-            power_list: vec![0, 2, 0],
+            power_list: smallvec![0, 2, 0],
         };
         assert_eq!(polynomial_b.monomials[0], monomial);
     }
@@ -609,14 +661,14 @@ mod tests {
             polynomial.monomials[0],
             Monomial {
                 coefficient: 35.0,
-                power_list: vec![2, 2, 0],
+                power_list: smallvec![2, 2, 0],
             }
         );
         assert_eq!(
             polynomial.monomials[1],
             Monomial {
                 coefficient: 42.0,
-                power_list: vec![0, 4, 0],
+                power_list: smallvec![0, 4, 0],
             }
         );
         assert_eq!(format!("{}", polynomial), "35x^2y^2 + 42y^4");

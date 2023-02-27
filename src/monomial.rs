@@ -6,19 +6,28 @@ use std::cmp::Ordering;
 use std::fmt;
 use std::ops;
 
+use smallvec::{SmallVec, smallvec};
+use num::{One};
+
 pub type Monomial32 = Monomial<f32>;
 pub type Monomial64 = Monomial<f64>;
 
 #[derive(Debug)]
 pub struct Monomial<T: CRing> {
     pub coefficient: T,
-    pub power_list: Vec<i32>,
+    pub power_list: SmallVec<[i32; 3]>,
 }
 
 impl<T> Monomial<T>
 where
     T: CRing + PartialEq,
 {
+    pub fn new() -> Self {
+        Monomial {
+            coefficient: One::one(),
+            power_list: smallvec![0, 0, 0],
+        }
+    }
     pub fn cmp_terms(&self, other: &Self) -> Ordering {
         let degree_a: i32 = self.degree();
         let degree_b: i32 = other.degree();
@@ -172,20 +181,7 @@ where
 {
     // http://pi.math.cornell.edu/~dmehrle/notes/old/alggeo/07MonomialOrdersandDivisionAlgorithm.pdf
     fn cmp(&self, other: &Self) -> Ordering {
-        match self.cmp_terms(other) {
-            Ordering::Less => Ordering::Less,
-            Ordering::Greater => Ordering::Greater,
-            // Break tie by comparing coeffs
-            Ordering::Equal => {
-                // if self.coefficient < other.coefficient {
-                //     return Ordering::Less;
-                // }
-                // if self.coefficient > other.coefficient {
-                //     return Ordering::Greater;
-                // }
-                Ordering::Equal
-            }
-        }
+        self.cmp_terms(other)
     }
 }
 
@@ -222,10 +218,10 @@ impl<T: CRing + Clone> ops::Mul for Monomial<T> {
         let coefficient = self.coefficient.clone() * other.coefficient.clone();
         let mut power_list;
         if coefficient.is_zero() {
-            power_list = vec![0; self.power_list.len().try_into().unwrap()];
+            power_list = smallvec![0; self.power_list.len().try_into().unwrap()];
         } else {
             let max_len = std::cmp::max(self.power_list.len(), other.power_list.len());
-            power_list = vec![0; max_len];
+            power_list = smallvec![0; max_len];
             for ind in 0..max_len {
                 let power_a = self.power(ind);
                 let power_b = other.power(ind);
@@ -257,12 +253,13 @@ mod tests {
     use num::complex::Complex;
     use num::rational::Ratio;
     use rstest::*;
+    use smallvec::{smallvec};
 
     #[fixture]
     fn monomial_a() -> Monomial64 {
         return Monomial {
             coefficient: 1.0,
-            power_list: vec![1, 1, 1],
+            power_list: smallvec![1, 1, 1],
         };
     }
 
@@ -270,7 +267,7 @@ mod tests {
     fn monomial_b() -> Monomial64 {
         return Monomial {
             coefficient: 3.5,
-            power_list: vec![2, 1, 5],
+            power_list: smallvec![2, 1, 5],
         };
     }
 
@@ -278,7 +275,7 @@ mod tests {
     fn monomial_c() -> Monomial64 {
         return Monomial {
             coefficient: 5.0,
-            power_list: vec![1, 2, 0],
+            power_list: smallvec![1, 2, 0],
         };
     }
 
@@ -286,7 +283,7 @@ mod tests {
     fn monomial_d() -> Monomial64 {
         return Monomial {
             coefficient: 100.0,
-            power_list: vec![0, 2, 5],
+            power_list: smallvec![0, 2, 5],
         };
     }
 
@@ -295,11 +292,11 @@ mod tests {
         let coefficient: i32 = 2;
         let monomial_a = Monomial {
             coefficient: coefficient,
-            power_list: vec![1, 1, 1],
+            power_list: smallvec![1, 1, 1],
         };
         let monomial_b = Monomial {
             coefficient: coefficient,
-            power_list: vec![1, 1, 1],
+            power_list: smallvec![1, 1, 1],
         };
         assert_eq!(monomial_a, monomial_b);
     }
@@ -309,11 +306,11 @@ mod tests {
         let coefficient: i64 = 2;
         let monomial_a = Monomial {
             coefficient: coefficient,
-            power_list: vec![1, 1, 1],
+            power_list: smallvec![1, 1, 1],
         };
         let monomial_b = Monomial {
             coefficient: coefficient,
-            power_list: vec![1, 1, 1],
+            power_list: smallvec![1, 1, 1],
         };
         assert_eq!(monomial_a, monomial_b);
     }
@@ -323,11 +320,11 @@ mod tests {
         let coefficient: f32 = 2.0;
         let monomial_a = Monomial {
             coefficient: coefficient,
-            power_list: vec![1, 1, 1],
+            power_list: smallvec![1, 1, 1],
         };
         let monomial_b = Monomial {
             coefficient: coefficient,
-            power_list: vec![1, 1, 1],
+            power_list: smallvec![1, 1, 1],
         };
         assert_eq!(monomial_a, monomial_b);
     }
@@ -337,11 +334,11 @@ mod tests {
         let coefficient: f64 = 2.0;
         let monomial_a = Monomial {
             coefficient: coefficient,
-            power_list: vec![1, 1, 1],
+            power_list: smallvec![1, 1, 1],
         };
         let monomial_b = Monomial {
             coefficient: coefficient,
-            power_list: vec![1, 1, 1],
+            power_list: smallvec![1, 1, 1],
         };
         assert_eq!(monomial_a, monomial_b);
     }
@@ -351,11 +348,11 @@ mod tests {
         let coefficient = Complex::new(2, 3);
         let monomial_a = Monomial {
             coefficient: coefficient,
-            power_list: vec![1, 1, 1],
+            power_list: smallvec![1, 1, 1],
         };
         let monomial_b = Monomial {
             coefficient: coefficient,
-            power_list: vec![1, 1, 1],
+            power_list: smallvec![1, 1, 1],
         };
         assert_eq!(monomial_a, monomial_b);
     }
@@ -365,11 +362,11 @@ mod tests {
         let coefficient = Ratio::new(2, 3);
         let monomial_a = Monomial {
             coefficient: coefficient,
-            power_list: vec![1, 1, 1],
+            power_list: smallvec![1, 1, 1],
         };
         let monomial_b = Monomial {
             coefficient: coefficient,
-            power_list: vec![1, 1, 1],
+            power_list: smallvec![1, 1, 1],
         };
         assert_eq!(monomial_a, monomial_b);
     }
@@ -379,11 +376,11 @@ mod tests {
     //     // 6x > 5x
     //     let monomial_a = Monomial {
     //         coefficient: 5.0,
-    //         power_list: vec![1, 0, 0],
+    //         power_list: smallvec![1, 0, 0],
     //     };
     //     let monomial_b = Monomial {
     //         coefficient: 6.0,
-    //         power_list: vec![1, 0, 0],
+    //         power_list: smallvec![1, 0, 0],
     //     };
     //     assert!(monomial_a < monomial_b);
     // }
@@ -393,11 +390,11 @@ mod tests {
         // xy > x^2
         let monomial_a = Monomial {
             coefficient: 1.0,
-            power_list: vec![1, 1, 0],
+            power_list: smallvec![1, 1, 0],
         };
         let monomial_b = Monomial {
             coefficient: 1.0,
-            power_list: vec![2, 0, 0],
+            power_list: smallvec![2, 0, 0],
         };
         assert!(monomial_a > monomial_b);
     }
@@ -407,11 +404,11 @@ mod tests {
         // y^2 > xy
         let monomial_a = Monomial {
             coefficient: 1.0,
-            power_list: vec![0, 2, 0],
+            power_list: smallvec![0, 2, 0],
         };
         let monomial_b = Monomial {
             coefficient: 1.0,
-            power_list: vec![1, 1, 0],
+            power_list: smallvec![1, 1, 0],
         };
         assert!(monomial_a > monomial_b);
     }
@@ -421,11 +418,11 @@ mod tests {
         // y^2 > xz
         let monomial_a = Monomial {
             coefficient: 1.0,
-            power_list: vec![0, 2, 0],
+            power_list: smallvec![0, 2, 0],
         };
         let monomial_b = Monomial {
             coefficient: 1.0,
-            power_list: vec![1, 0, 1],
+            power_list: smallvec![1, 0, 1],
         };
         assert!(monomial_a > monomial_b);
     }
@@ -435,11 +432,11 @@ mod tests {
         // yz > xz
         let monomial_a = Monomial {
             coefficient: 1.0,
-            power_list: vec![0, 1, 1],
+            power_list: smallvec![0, 1, 1],
         };
         let monomial_b = Monomial {
             coefficient: 1.0,
-            power_list: vec![1, 0, 1],
+            power_list: smallvec![1, 0, 1],
         };
         assert!(monomial_a > monomial_b);
     }
@@ -449,11 +446,11 @@ mod tests {
         // z^2 > yz
         let monomial_a = Monomial {
             coefficient: 1.0,
-            power_list: vec![0, 0, 2],
+            power_list: smallvec![0, 0, 2],
         };
         let monomial_b = Monomial {
             coefficient: 1.0,
-            power_list: vec![0, 1, 1],
+            power_list: smallvec![0, 1, 1],
         };
         assert!(monomial_a > monomial_b);
     }
@@ -463,11 +460,11 @@ mod tests {
         // x^2yz^3 > x^5y
         let monomial_a = Monomial {
             coefficient: 1.0,
-            power_list: vec![2, 1, 3],
+            power_list: smallvec![2, 1, 3],
         };
         let monomial_b = Monomial {
             coefficient: 1.0,
-            power_list: vec![5, 1],
+            power_list: smallvec![5, 1],
         };
         assert!(monomial_a > monomial_b);
     }
@@ -477,11 +474,11 @@ mod tests {
         // x^2y > x^3
         let monomial_a = Monomial {
             coefficient: 1.0,
-            power_list: vec![2, 1],
+            power_list: smallvec![2, 1],
         };
         let monomial_b = Monomial {
             coefficient: 1.0,
-            power_list: vec![3],
+            power_list: smallvec![3],
         };
         assert!(monomial_a > monomial_b);
     }
@@ -491,11 +488,11 @@ mod tests {
         // y > x
         let monomial_a = Monomial {
             coefficient: 1.0,
-            power_list: vec![0, 1],
+            power_list: smallvec![0, 1],
         };
         let monomial_b = Monomial {
             coefficient: 1.0,
-            power_list: vec![1],
+            power_list: smallvec![1],
         };
         assert!(monomial_a > monomial_b);
     }
@@ -505,11 +502,11 @@ mod tests {
         // z > y
         let monomial_a = Monomial {
             coefficient: 1.0,
-            power_list: vec![0, 0, 1],
+            power_list: smallvec![0, 0, 1],
         };
         let monomial_b = Monomial {
             coefficient: 1.0,
-            power_list: vec![0, 1],
+            power_list: smallvec![0, 1],
         };
         assert!(monomial_a > monomial_b);
     }
@@ -519,11 +516,11 @@ mod tests {
         // z^2 > y^2
         let monomial_a = Monomial {
             coefficient: 1.0,
-            power_list: vec![0, 0, 2],
+            power_list: smallvec![0, 0, 2],
         };
         let monomial_b = Monomial {
             coefficient: 1.0,
-            power_list: vec![0, 2],
+            power_list: smallvec![0, 2],
         };
         assert!(monomial_a > monomial_b);
     }
@@ -533,11 +530,11 @@ mod tests {
         // z > x
         let monomial_a = Monomial {
             coefficient: 1.0,
-            power_list: vec![0, 0, 1],
+            power_list: smallvec![0, 0, 1],
         };
         let monomial_b = Monomial {
             coefficient: 1.0,
-            power_list: vec![1],
+            power_list: smallvec![1],
         };
         assert!(monomial_a > monomial_b);
     }
@@ -547,11 +544,11 @@ mod tests {
         // x^2 < x
         let monomial_a = Monomial {
             coefficient: 1.0,
-            power_list: vec![2, 0, 0],
+            power_list: smallvec![2, 0, 0],
         };
         let monomial_b = Monomial {
             coefficient: 1.0,
-            power_list: vec![1, 0, 0],
+            power_list: smallvec![1, 0, 0],
         };
         assert!(monomial_a < monomial_b);
     }
@@ -561,11 +558,11 @@ mod tests {
         // x^2y^2 < x^3
         let monomial_a = Monomial {
             coefficient: 1.0,
-            power_list: vec![2, 2, 0],
+            power_list: smallvec![2, 2, 0],
         };
         let monomial_b = Monomial {
             coefficient: 1.0,
-            power_list: vec![3, 0, 0],
+            power_list: smallvec![3, 0, 0],
         };
         assert!(monomial_a < monomial_b);
     }
@@ -638,7 +635,7 @@ mod tests {
     fn test_monomial_display() {
         let monomial_a = Monomial {
             coefficient: 5.0,
-            power_list: vec![1, 0, 1],
+            power_list: smallvec![1, 0, 1],
         };
         assert_eq!("5xz", format!("{}", monomial_a).as_str());
     }
@@ -646,7 +643,7 @@ mod tests {
     fn test_monomial_display_one() {
         let monomial_a = Monomial {
             coefficient: 1.0,
-            power_list: vec![1, 1, 0],
+            power_list: smallvec![1, 1, 0],
         };
         assert_eq!("xy", format!("{}", monomial_a).as_str());
     }
@@ -655,7 +652,7 @@ mod tests {
     fn test_monomial_display_negative() {
         let monomial_a = Monomial {
             coefficient: -4.0,
-            power_list: vec![1, 0, 0],
+            power_list: smallvec![1, 0, 0],
         };
         assert_eq!("-4x", format!("{}", monomial_a).as_str());
     }
@@ -664,7 +661,7 @@ mod tests {
     fn test_monomial_display_negative_one() {
         let monomial_a = Monomial {
             coefficient: -1.0,
-            power_list: vec![1, 0, 0],
+            power_list: smallvec![1, 0, 0],
         };
         assert_eq!("-x", format!("{}", monomial_a).as_str());
     }
