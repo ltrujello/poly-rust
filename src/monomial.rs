@@ -6,8 +6,8 @@ use std::cmp::Ordering;
 use std::fmt;
 use std::ops;
 
-use smallvec::{SmallVec, smallvec};
-use num::{One};
+use num::One;
+use smallvec::{smallvec, SmallVec};
 
 pub type Monomial32 = Monomial<f32>;
 pub type Monomial64 = Monomial<f64>;
@@ -80,78 +80,35 @@ where
     }
 }
 
-impl<T> Monomial<T>
-where
-    T: CRing + std::fmt::Display + PartialEq,
-{
-    pub fn expr(&self) -> String {
-        let mut output: String = String::from("");
-        if self.coefficient.is_one() {
-            output.push_str(&format!("{}", self.term_expr()));
-        } else {
-            output.push_str(&format!("{}{}", self.coefficient, self.term_expr()));
-        }
-        output
-    }
-
-    pub fn term_expr(&self) -> String {
-        let mut output: String = String::from("");
-        for (ind, &power) in self.power_list.iter().enumerate() {
-            if ind == 0 && power > 0 {
-                if power == 1 {
-                    output.push_str(&format!("x"));
-                } else {
-                    output.push_str(&format!("x^{power}"));
-                }
-            }
-
-            if ind == 1 && power > 0 {
-                if power == 1 {
-                    output.push_str(&format!("y"));
-                } else {
-                    output.push_str(&format!("y^{power}"));
-                }
-            }
-
-            if ind == 2 && power > 0 {
-                if power == 1 {
-                    output.push_str(&format!("z"));
-                } else {
-                    output.push_str(&format!("z^{power}"));
-                }
-            }
-        }
-        output
-    }
-}
-
 impl<T> std::fmt::Display for Monomial<T>
 where
-    T: std::fmt::Display + CRing + Clone + PartialEq,
+    T: std::fmt::Display + CRing + PartialEq,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let coeff: String;
         let mut term_expr = format!("");
         for (ind, &power) in self.power_list.iter().enumerate() {
-            let mut letter = "";
-            let mut exp = format!("");
-            if power > 0 {
-                if ind == 0 {
-                    letter = "x";
-                }
-                if ind == 1 {
-                    letter = "y";
-                }
-                if ind == 2 {
-                    letter = "z";
-                }
-                if power != 1 {
-                    exp = format!("^{power}");
-                }
+            let symbol: &str;
+            let power_component: String;
+            if power == 0 {
+                continue;
             }
-            term_expr.push_str(&format!("{}{}", letter, exp));
+            match ind {
+                0 => symbol = "x",
+                1 => symbol = "y",
+                2 => symbol = "z",
+                _ => symbol = "?",
+            }
+
+            if power != 1 {
+                power_component = format!("^{power}");
+            } else {
+                power_component = format!("");
+            }
+
+            term_expr.push_str(&format!("{symbol}{power_component}"));
         }
 
-        let coeff: String;
         if term_expr.is_empty() {
             coeff = format!("{}", self.coefficient)
         } else if format!("{}", self.coefficient) == "-1" {
@@ -253,7 +210,7 @@ mod tests {
     use num::complex::Complex;
     use num::rational::Ratio;
     use rstest::*;
-    use smallvec::{smallvec};
+    use smallvec::smallvec;
 
     #[fixture]
     fn monomial_a() -> Monomial64 {
@@ -371,19 +328,19 @@ mod tests {
         assert_eq!(monomial_a, monomial_b);
     }
 
-    // #[rstest]
-    // fn test_ordering_a() {
-    //     // 6x > 5x
-    //     let monomial_a = Monomial {
-    //         coefficient: 5.0,
-    //         power_list: smallvec![1, 0, 0],
-    //     };
-    //     let monomial_b = Monomial {
-    //         coefficient: 6.0,
-    //         power_list: smallvec![1, 0, 0],
-    //     };
-    //     assert!(monomial_a < monomial_b);
-    // }
+    #[rstest]
+    fn test_ordering_a() {
+        // 6x == 5x
+        let monomial_a = Monomial {
+            coefficient: 5.0,
+            power_list: smallvec![1, 0, 0],
+        };
+        let monomial_b = Monomial {
+            coefficient: 6.0,
+            power_list: smallvec![1, 0, 0],
+        };
+        assert_eq!(monomial_a, monomial_b);
+    }
 
     #[rstest]
     fn test_ordering_b() {
@@ -664,5 +621,14 @@ mod tests {
             power_list: smallvec![1, 0, 0],
         };
         assert_eq!("-x", format!("{}", monomial_a).as_str());
+    }
+
+    #[rstest]
+    fn test_monomial_display_empty() {
+        let monomial_a = Monomial {
+            coefficient: 1.0,
+            power_list: smallvec![0, 0, 0],
+        };
+        assert_eq!("1", format!("{}", monomial_a).as_str());
     }
 }

@@ -2,8 +2,8 @@ use crate::lexer::{Lexer, TokType, Token};
 use crate::monomial::Monomial64;
 use crate::polynomial::Polynomial64;
 use log::{debug, error, info};
+use smallvec::smallvec;
 use std::time::Instant;
-use smallvec::{smallvec};
 
 pub struct Parser {
     pub lexer: Lexer,
@@ -343,8 +343,8 @@ impl Parser {
 mod tests {
     use super::*;
     use rstest::*;
+    use smallvec::smallvec;
     use std::mem;
-    use smallvec::{smallvec};
 
     #[rstest]
     fn parser_monomial_degree_one() {

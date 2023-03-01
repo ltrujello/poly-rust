@@ -304,7 +304,7 @@ mod tests {
     use super::*;
     use crate::monomial::Monomial64;
     use rstest::*;
-    use smallvec::{smallvec};
+    use smallvec::smallvec;
 
     #[fixture]
     fn polynomial_a() -> Polynomial64 {
@@ -451,7 +451,6 @@ mod tests {
         assert_eq!(polynomial.monomials[0].power_list[1], 0);
         assert_eq!(polynomial.monomials[0].power_list[2], 0);
     }
-
 
     #[rstest]
     fn test_polynomial_from_str_a(polynomial_a: Polynomial64) {
