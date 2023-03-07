@@ -16,6 +16,7 @@ pub enum ParserErr {
     LexerErr(String),
     InvalidSyntax(String),
 }
+const NUM_VARS: usize = 8;
 
 impl Parser {
     pub fn parser_init(current_line: String) -> Result<Self, ParserErr> {
@@ -78,7 +79,7 @@ impl Parser {
             self.get_next_token()?;
         }
 
-        let mut power_list = smallvec![0; 3];
+        let mut power_list = smallvec![0; NUM_VARS];
         // A single loop will parse x ^ num
         loop {
             let prev_position = self.lexer.curr_pos;
@@ -90,6 +91,11 @@ impl Parser {
                     "x" => ind = 0,
                     "y" => ind = 1,
                     "z" => ind = 2,
+                    "u" => ind = 3,
+                    "v" => ind = 4,
+                    "w" => ind = 5,
+                    "s" => ind = 6,
+                    "t" => ind = 7,
                     _ => {
                         let msg = format!(
                             "Received unknown token content {}",

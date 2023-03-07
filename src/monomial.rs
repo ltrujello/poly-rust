@@ -97,6 +97,11 @@ where
                 0 => symbol = "x",
                 1 => symbol = "y",
                 2 => symbol = "z",
+                3 => symbol = "u",
+                4 => symbol = "v",
+                5 => symbol = "w",
+                6 => symbol = "s",
+                7 => symbol = "t",
                 _ => symbol = "?",
             }
 
